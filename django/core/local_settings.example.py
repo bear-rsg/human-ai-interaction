@@ -20,7 +20,7 @@ DEBUG = True/False
 ALLOWED_HOSTS = ['*']/['human-ai-interaction.bham.ac.uk']
 
 # Provide the email address for the site admin (e.g. the researcher/research team)
-ADMIN_EMAIL = '...@bham.ac.uk'
+ADMIN_EMAIL = 'm.perlman@bham.ac.uk'
 
 # Set the database name below
 DATABASES = {
