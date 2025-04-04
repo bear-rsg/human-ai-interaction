@@ -1,13 +1,11 @@
-# RSG Django Template - Django Project
-
-RSG Django Template.
+# Human AI Interaction - Django Project
 
 This document is primarily designed for technical staff working on the development of the project (e.g. software engineers and system admins).
 
 
 ## Django Project
 
-The project is called 'django-template', but project files are stored in the 'core' folder. Please refer to `core/settings.py` for further details
+The project is called 'human-ai-interaction', but project files are stored in the 'core' folder. Please refer to `core/settings.py` for further details
 
 
 ## Django Apps
@@ -15,6 +13,10 @@ The project is called 'django-template', but project files are stored in the 'co
 Apps include:
 
 + general - this is for static, general sections of the website (e.g. cookies page, accessibility page, etc.) that don't require a data model
+
++ **account** - custom user accounts and auth (overrides the default Django account and auth functionality)
++ **general** - this is for general sections of the website that don't require a data model (e.g. about page, cookies page, accessibility page, etc.)
++ **researchdata** - this app is for collecting, managing, and presenting the research data being collected as part of this project
 
 
 ## Django Admin
@@ -46,15 +48,6 @@ This also complies with Flake8 for testing against PEP8:
 + There's a `.flake8` file in the repo root directory, used to customise Flake8 tests
 
 
-You can use coverage to see how much of the code is included in the tests:
-
-+ Use `pip install coverage` to install (if not already installed)
-+ Use the `.coveragerc file` to customise, e.g. to ignore particular folders, etc
-+ Run: `coverage run manage.py test`
-+ Run: `coverage html`
-+ This should create a htmlcov folder. View the index.html page in this folder using a web browser
-
-
 ## JavaScript
 
 + JavaScript files are stored in `django/core/static/js`
@@ -67,12 +60,10 @@ You can use coverage to see how much of the code is included in the tests:
 
 Our websites must comply with accessibility regulations. See the [BEAR Accessibility](https://accessibility.bear.bham.ac.uk/) site for more information.
 
-Please note that the RSG's template Django project will link to the home page of the BEAR Accessibility website in the footer. This will likely need to be changed (on a per site basis) to the specific page that holds the correct accessibility statement for each site. E.g. standard CAL Django websites can point to: <https://accessibility.bear.bham.ac.uk/statements-cal.html> or you may need to create a new statement page and link to that.
-
 
 ## Database
 
-The SQLite3 database used sits in the Django project root folder (alongside this README file). It is not included within the Git repo, so must instead be requested from the system admin. Once you have a copy of this database, give it a suitable name like `django-template.sqlite3` and place in the `django/` directory (same directory that stores `manage.py`). Remember to name this database in `local_settings.py` (see Settings section of this document for more details)
+The SQLite3 database used sits in the Django project root folder (alongside this README file). It is not included within the Git repo, so must instead be requested from the system admin. Once you have a copy of this database, give it a suitable name like `human-ai-interaction.sqlite3` and place in the `django/` directory (same directory that stores `manage.py`). Remember to name this database in `local_settings.py` (see Settings section of this document for more details)
 
 
 ## Settings

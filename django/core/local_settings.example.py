@@ -17,7 +17,7 @@ SECRET_KEY = ''
 DEBUG = True/False
 
 # Set to ['*'] if in development, or specific IP addresses and domains if in production
-ALLOWED_HOSTS = ['*']/['django-template.bham.ac.uk']
+ALLOWED_HOSTS = ['*']/['human-ai-interaction.bham.ac.uk']
 
 # Provide the email address for the site admin (e.g. the researcher/research team)
 ADMIN_EMAIL = '...@bham.ac.uk'
@@ -26,9 +26,9 @@ ADMIN_EMAIL = '...@bham.ac.uk'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'django-template.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'human-ai-interaction.sqlite3'),
         'TEST': {
-            'NAME': os.path.join(BASE_DIR, 'django-template_TEST.sqlite3'),
+            'NAME': os.path.join(BASE_DIR, 'human-ai-interaction_TEST.sqlite3'),
         },
     }
 }

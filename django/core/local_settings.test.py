@@ -20,9 +20,9 @@ ADMIN_EMAIL = 'bear-rsg@contacts.bham.ac.uk'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'django-template.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'human-ai-interaction.sqlite3'),
         'TEST': {
-            'NAME': os.path.join(BASE_DIR, 'django-template_TEST.sqlite3'),
+            'NAME': os.path.join(BASE_DIR, 'human-ai-interaction_TEST.sqlite3'),
         },
     }
 }
