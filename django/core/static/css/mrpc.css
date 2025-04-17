@@ -1,0 +1,479 @@
+/*
+This is specific styling for the MRPC section in the 'pages' app.
+I copied the CSS file from old website and tweaked accordingly.
+*/
+
+#content,
+#disclaimer {
+    background-color: #fcf8f3;
+}
+
+a#mrpc-homelink {
+    display: block;
+    width: fit-content;
+    font-size: 2em;
+    margin: 1em 0;
+    color: black;
+    line-height: 1em;
+    font-weight: 700;
+    border-bottom: 0.2em solid #c03232;
+}
+
+a#mrpc-homelink:hover {
+    text-decoration: none;
+}
+
+#menu a {
+    text-decoration: none;
+}
+
+.node,
+.node_picture,
+.subnode,
+.subnode_picture,
+.information,
+.information_picture,
+table {
+    background-color: #eee;
+    border: 1px solid #ddd;
+}
+
+.fade {
+    color: black;
+    opacity: 1.0 !important;
+}
+
+#menu {
+    background-color: #500;
+}
+
+#menu ul li {
+    border-left-color: #fbf1e6;
+}
+
+#menu ul li a {
+    color: #fbf1e6;
+}
+
+#sitetitle {
+    height: 100px;
+}
+
+h2,
+h3,
+h4,
+h5,
+p,
+#sitetitle,
+#menu,
+#strip,
+#content,
+#disclaimer,
+#left,
+#right {
+    margin: 0px;
+    padding: 0px;
+}
+
+h2,
+h3 {
+    font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+h2 {
+    font-size: 1.2em;
+}
+
+h3 {
+    font-size: 1em;
+}
+
+h2,
+h3 {
+    clear: both;
+    padding-bottom: 0.5em;
+}
+
+p,
+label,
+table {
+    font-size: 1em;
+}
+
+#menu {
+    font-size: 0.8em;
+}
+
+#disclaimer {
+    font-size: 0.6em;
+    padding-bottom: 1em;
+}
+
+.notice {
+    font-style: italic;
+}
+
+.nonactive p {
+    font-size: 0.8em;
+}
+
+#sitetitle {
+    height: 100px;
+    padding-top: 1em;
+    padding-right: 1em;
+}
+
+#menu {
+    text-align: center;
+}
+
+#menu ul {
+    display: inline;
+}
+
+#menu ul li {
+    display: inline;
+    border-left-width: 1px;
+    border-left-style: solid;
+    padding-left: 2em;
+    padding-right: 2em;
+
+}
+
+#menu ul li:first-child {
+    border: none;
+}
+
+#strip {
+    background-color: #FFEC82;
+    font-size: 0.6em;
+}
+
+#content {
+    /* padding: 1em; */
+}
+
+#disclaimer {
+    text-align: center;
+    font-size: 0.8em;
+}
+
+#left {
+    top: 0px;
+    left: 0px;
+    position: absolute;
+
+    height: 100%;
+    width: 50px;
+}
+
+#right {
+    top: 0px;
+    right: 0px;
+    position: absolute;
+
+    height: 100%;
+    width: 50px;
+}
+
+.node,
+.node_picture,
+.subnode,
+.subnode_picture,
+.information,
+.information_picture {
+    margin-bottom: 1em;
+    padding: 0.5em;
+    clear: both;
+}
+
+.node_picture {
+    min-height: 170px;
+}
+
+.subnode_picture {
+    min-height: 95px;
+}
+
+.subnode {
+    min-height: 3em;
+}
+
+.information_picture {
+    min-height: 300px;
+}
+
+div.title {
+    float: left;
+}
+
+span.bold {
+    font-weight: bold;
+}
+
+.picture,
+.thumbnail,
+.zoom {
+    float: right;
+    background-repeat: no-repeat;
+}
+
+.picture {
+    width: 150px;
+    height: 150px;
+}
+
+.thumbnail {
+    width: 75px;
+    height: 75px;
+}
+
+.zoom {
+    width: 300px;
+    height: 300px;
+}
+
+tr,
+td {
+    vertical-align: top;
+}
+
+.description {
+    clear: left;
+}
+
+#transbar {
+    width: 100%;
+}
+
+#breadcrumb {
+    float: left;
+    margin-bottom: 2em;
+    font-size: 0.9em;
+    background: #EEE;
+    width: 100%;
+    padding: 0.3em;
+    color: black;
+}
+
+#breadcrumb ul,
+#breadcrumb li {
+    display: inline;
+    padding: 0px;
+}
+
+#breadcrumb ul li:before {
+    content: "\00BB \0020";
+}
+
+#breadcrumb ul li:first-child:before {
+    content: "";
+}
+
+#translate {
+    text-align: right;
+}
+
+.nostyle {
+    display: none;
+    visibility: hidden;
+}
+
+#adminbar {
+    margin-bottom: 1em;
+}
+
+label.hidden {
+    display: none;
+    visibility: hidden;
+}
+
+label.style {
+    display: inline;
+    visibility: visible;
+}
+
+.admin {
+    clear: left;
+    margin-bottom: 1em;
+}
+
+#login {
+    text-align: center;
+}
+
+#add {
+    float: left;
+}
+
+#statistics {
+    text-align: right;
+}
+
+#tree ul li {
+    list-style: circle;
+}
+
+#admin_options {
+    margin-left: 1em;
+    float: left;
+}
+
+.nobullet {
+    list-style: none;
+}
+
+#edit {
+    float: left;
+}
+
+textarea {
+    width: 100%;
+    height: 10em;
+}
+
+div.control {
+    margin-bottom: 1em;
+}
+
+ul.error {
+    list-style: none;
+    color: #FF0000;
+    padding-left: 0px;
+}
+
+table {
+    clear: both;
+}
+
+td,
+th {
+    padding: 1px;
+    margin: 1px;
+}
+
+th {
+    text-align: left;
+}
+
+.author {
+    font-size: 0.8em;
+    font-style: italic;
+    text-align: right;
+    padding-top: 0.5em;
+    clear: both;
+}
+
+.subnode {
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+
+#trail {
+    margin-left: 0px;
+}
+
+label.error {
+    float: none;
+    color: red;
+    padding-left: .5em;
+    vertical-align: top;
+}
+
+.error p {
+    color: #FF0000;
+}
+
+.clear {
+    clear: both;
+}
+
+.space {
+    padding-top: 1em;
+}
+
+/* Interactive Exercise: Reorder Sentences */
+
+#mrpc-exercise-reordersentences-input {
+    margin: 1em;
+}
+
+.mrpc-exercise-reordersentences-input-button {
+    display: block;
+    width: fit-content;
+    padding: 0.4em 0.8em;
+    margin: 1em 0;
+    background: #303030;
+    color: #CCC;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 0.2em;
+}
+
+.mrpc-exercise-reordersentences-input-button.deactivated {
+    cursor: default;
+    opacity: 0.4;
+}
+
+#mrpc-exercise-reordersentences-output {
+    display: none;
+    padding: 1em;
+    margin: 1em;
+    background: rgba(0, 0, 0, 0.1);
+    font-weight: bold;
+}
+
+/* Interactive Exercise: Fill In The Gaps */
+
+#mrpc-exercise-fillinthegaps-input {
+    margin: 1em;
+}
+
+#mrpc-exercise-fillinthegaps-translation {
+    margin: 1em;
+}
+
+#mrpc-exercise-fillinthegaps-input input.result-wrong {
+    background: #c03232;
+    color: white;
+}
+
+#mrpc-exercise-fillinthegaps-input input.result-correct {
+    background: #27ae60;
+    color: white;
+}
+
+#mrpc-exercise-fillinthegaps-input input {
+    border: 1px solid #DDD;
+    padding: 0.3em 0.3em 0.2em 0.3em;
+}
+
+#mrpc-exercise-fillinthegaps-finish {
+    display: block;
+    width: fit-content;
+    padding: 0.4em 0.8em;
+    margin: 1em;
+    background: #303030;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 0.2em;
+}
+
+#mrpc-exercise-result {
+    color: white;
+    display: none;
+    font-weight: bold;
+    width: fit-content;
+    margin: 3em auto;
+}
+
+#mrpc-exercise-result span.incorrect {
+    background: #c0392b;
+    padding: 1em 1.3em;
+}
+
+#mrpc-exercise-result span.correct {
+    background: #27ae60;
+    padding: 1em 1.3em;
+}

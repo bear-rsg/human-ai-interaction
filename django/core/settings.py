@@ -136,16 +136,12 @@ if not DEBUG:  # NOQA
 
 
 # Logging
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
         },
     },
     'formatters': {
@@ -161,16 +157,15 @@ LOGGING = {
     'handlers': {
         'stream': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG' if DEBUG else 'INFO',  # NOQA
-            'formatter': 'verbose',
+            'level': 'INFO',
+            'formatter': 'simple',
         },
         'file': {
-            'level': 'DEBUG',
-            'filters': ['require_debug_true'],
+            'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'django.log'),
             'formatter': 'verbose',
-            'maxBytes': 104857600,  # 100*1024*1024 bytes (100MB)
+            'maxBytes': 20971520,  # 20*1024*1024 bytes (20MB)
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -181,7 +176,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['stream', 'file', 'mail_admins'],
-            'level': 'DEBUG' if DEBUG else 'INFO',  # NOQA
+            'level': 'INFO',
             'propagate': 'True',
         },
     },

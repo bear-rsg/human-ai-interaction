@@ -1,0 +1,24 @@
+/*
+This CSS file provides additional styles for the CKEditor input field
+It's includes in the CKEditor config in settings.py > contentsCss
+*/
+
+body {
+    padding: 1em 1.5em;
+}
+
+a {
+    cursor: default;
+    outline-style: dashed;
+    outline-color: skyblue;
+}
+
+sub {
+    vertical-align: sub;
+    font-size: 0.8em;
+}
+
+sup {
+    vertical-align: super;
+    font-size: 0.8em;
+}

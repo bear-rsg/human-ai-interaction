@@ -30,8 +30,8 @@ if (getCookie('cookieMessageApprove') !== '1') {
 
     // Generate HTML message
     var html_to_inject = '\
-<div id="cookie-message-popup" style="text-align: center; z-index: 10000; background: black; width: 96vw; padding: 1em; color: white; position: fixed; bottom: 2vw; right: 2vw;">\
-This website uses cookies. By using this website, you accept our use of cookies. See our <a href="/cookies/" style="color: white; text-decoration: underline;">cookies policy</a> for more information.\
+<div id="cookie-message-popup" style="text-align: center; z-index: 1000; background: black; width: 96vw; padding: 1em; color: white; position: fixed; bottom: 2vw; right: 2vw;">\
+<i class="fas fa-cookie-bite"></i> This website uses cookies. By using this website, you accept our use of cookies. See our <a href="/cookies/" style="color: white; text-decoration: underline;">cookies policy</a> for more information.\
 <button id="cookie-message-popup-accept" style="display: inline-block; background: white; color: black; padding: 0.4em 1.7em; margin-left: 1em; cursor: pointer; vertical-align: middle;">Accept</button>\
 </div>';
 
@@ -42,7 +42,7 @@ This website uses cookies. By using this website, you accept our use of cookies.
 // Add event listener for 'accept' button to set the cookie and hide the message
 try {
     document.getElementById("cookie-message-popup-accept").addEventListener("click", function () {
-        document.cookie = "cookieMessageApprove=1; expires=Mon, 31 Dec 2040 23:59:59 GMT; path=/; Secure;";
+        document.cookie = "cookieMessageApprove=1; expires=Mon, 31 Dec 2050 23:59:59 GMT; path=/;";
         document.getElementById("cookie-message-popup").style.display = "none";
     });
 } catch (ignore) {

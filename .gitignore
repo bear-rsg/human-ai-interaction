@@ -7,6 +7,8 @@ private/
 django/media/
 django/static/
 node_modules/
+django/general/migrations/
+.psd
 
 
 ###################### Django Templated gitignore paths  ######################
