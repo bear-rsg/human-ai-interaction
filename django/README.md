@@ -1,4 +1,4 @@
-# Human AI Interaction - Django Project
+# Human-AI Interaction - Django Project
 
 This document is primarily designed for technical staff working on the development of the project (e.g. software engineers and system admins).
 

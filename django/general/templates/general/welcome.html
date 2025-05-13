@@ -6,16 +6,18 @@
 <section id="welcome-banner">
     <div id="welcome-banner-content">
         <div id="welcome-banner-content-title">
-            Human / AI
+            Human-AI
             <br>
             Interaction
         </div>
         <div id="welcome-banner-content-tagline">
-            Tagline about the project goes here and is roughly this long
+            Trust, Intimacy and Deception<br>in Human-AI Interaction
         </div>
-        <div id="welcome-banner-content-links">
-            <a href="{% url 'general:welcome' %}">View Experiments</a>
-        </div>
+        {% if user.is_authenticated %}
+            <div id="welcome-banner-content-links">
+                <a href="{% url 'general:welcome' %}">View Experiments</a>
+            </div>
+        {% endif %}
     </div>
 
     <div id="welcome-banner-proceed">
@@ -26,7 +28,7 @@
 <section id="welcome" class="container">
     <h2>Welcome</h2>
     <p>
-        Welcome to the Human AI Interaction website.
+        Welcome to the Human-AI Interaction website.
     </p>
     <p>
         ...
@@ -34,7 +36,7 @@
 </section>
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function(){
         // Scroll down to main welcome section when clicking on the proceed button in the welcome banner
         $('#welcome-banner-proceed').on('click', function(){
             $('html,body').animate({ scrollTop: $('#welcome').offset().top - 50 }, 800); 

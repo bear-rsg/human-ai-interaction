@@ -17,12 +17,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    # 3rd Party
+    # captchanotimeout is a custom app to override "captcha" to prevent 2 minute timeouts
+    # See: https://github.com/praekelt/django-recaptcha/issues/183
+    'captchanotimeout',
+    'django_recaptcha',
+    'debug_toolbar',
     # Custom apps
     'account',
     'general',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,6 +66,13 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Custom user model for authentication
 
 AUTH_USER_MODEL = 'account.User'
+
+
+# Redirects for login and logout
+
+LOGIN_URL = '/account/login/'
+LOGIN_REDIRECT_URL = '/account/'
+LOGOUT_REDIRECT_URL = '/account/login/'
 
 
 # Password validation
@@ -143,6 +157,9 @@ LOGGING = {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
         },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'formatters': {
         'verbose': {
@@ -158,14 +175,15 @@ LOGGING = {
         'stream': {
             'class': 'logging.StreamHandler',
             'level': 'INFO',
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
         'file': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(BASE_DIR, 'django.log'),
             'formatter': 'verbose',
-            'maxBytes': 20971520,  # 20*1024*1024 bytes (20MB)
+            'maxBytes': 104857600,  # 100*1024*1024 bytes (100MB)
         },
         'mail_admins': {
             'level': 'ERROR',

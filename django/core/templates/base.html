@@ -4,13 +4,13 @@
 <html lang="en">
 
     <head>
-        <title>Human AI Interaction</title>
+        <title>Human-AI Interaction</title>
 
         <!--Meta-->
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Human AI Interaction is a research project at the University of Birmingham">
+        <meta name="description" content="Human-AI Interaction is a research project at the University of Birmingham">
         <meta name="author" content="University of Birmingham">
 
         <!-- CSS -->
@@ -51,7 +51,11 @@
         <nav class="navbar fixed-top navbar-expand-lg">
 
             <a class="navbar-brand" href="{% url 'general:welcome' %}">
-                <h1>Human / AI<br>Interaction</h1>
+                <h1>
+                    Human-AI
+                    <br>
+                    Interaction
+                </h1>
             </a>
 
             <!-- Nav toggle button (for small screens) -->
@@ -73,13 +77,28 @@
                             About
                         </a>
                     </li>
-                    <!-- Experiments -->
-                    <li class="nav-item">
-                        <a class="nav-link{% if "/experiments/" in request.path %} active{% endif %}" href="{% url 'general:about' %}">
-                            Experiments
-                        </a>
-                    </li>
                     {% if user.is_authenticated %}
+                        <!-- Experiments -->
+                        <li class="nav-item">
+                            <a class="nav-link{% if "/experiments/" in request.path %} active{% endif %}" href="{% url 'general:about' %}">
+                                Experiments
+                            </a>
+                        </li>
+                        <!-- Account -->
+                        <li class="nav-item">
+                            <a class="nav-link{% if "/account/" in request.path %} active{% endif %}" href="{% url 'account:account' %}">
+                                Account
+                            </a>
+                        </li>
+                    {% else %}
+                        <!-- Login -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'account:login' %}">
+                                Login
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if user.is_staff %}
                         <!-- Admin -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'admin:index' %}">
@@ -105,7 +124,7 @@
                     <a href="https://www.birmingham.ac.uk/" target="_blank"><img src="{% static 'images/logos/uob.png' %}" alt="University of Birmingham"></a>
                 </div>
                 <p>
-                    <strong>Human AI Interaction</strong> is a research project at the <a href="http://www.birmingham.ac.uk">University of Birmingham</a>
+                    <strong>Human-AI Interaction</strong> is a research project at the <a href="http://www.birmingham.ac.uk">University of Birmingham</a>
                 </p>
                 <p>
                     This website has been developed by the <a href="http://www.birmingham.ac.uk/bear-software">Research Software Group</a> for the <a href="https://www.birmingham.ac.uk/university/colleges/artslaw/index.aspx">College of Arts and Law</a>

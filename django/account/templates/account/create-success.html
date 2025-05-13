@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% load settings_value %}
+
+{% block main %}
+
+<section class="container">
+    <h2>Account Created</h2>
+    <p>
+        Your account has been successfully created
+    </p>
+    <p>
+        To get started using your account please <a href="{% url 'account:login' %}">Login</a>.
+    </p>
+</section>
+
+{% endblock %}

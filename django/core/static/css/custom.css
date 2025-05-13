@@ -436,15 +436,16 @@ main section {
 
 #welcome-banner-content-title {
     line-height: 1em;
-    margin-bottom: 0.5em;
+    margin: 0 auto 0.5em auto;
     background: black;
     padding: 0.2em 0.4em;
+    width: fit-content;
 }
 
 #welcome-banner-content-tagline {
-    opacity: 0.7;
+    opacity: 0.8;
     line-height: 1.3em;
-    max-width: 15em;
+    max-width: 20em;
 }
 
 #welcome-banner-content-links {
