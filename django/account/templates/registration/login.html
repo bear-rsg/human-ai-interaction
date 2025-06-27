@@ -16,7 +16,7 @@
             {{ form.username.errors }}
             <label for="{{ form.username.id_for_label }}">Email:</label>
             {{ form.username }}
-            <a href="mailto:{% settings_value 'MAIN_CONTACT_EMAIL' %}?subject=Human-AI Interaction: User has forgotten email address&body=I have forgotten the email address that is associated with my account. Please can you remind me. My name is: ">Forgot?</a>
+            <a href="mailto:{% settings_value 'ADMIN_EMAIL' %}?subject=Human-AI Interaction: User has forgotten email address&body=I have forgotten the email address that is associated with my account. Please can you remind me. My name is: ">Forgot?</a>
         </p>
         <p>
             {{ form.password.errors }}

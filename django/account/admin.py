@@ -11,6 +11,7 @@ admin.site.site_header = 'Human-AI Interaction'
 admin.site.site_title = 'Human-AI Interaction'
 admin.site.index_title = ''
 
+
 class UserAdmin(UserAdmin):
     """
     Customise the admin interface: User

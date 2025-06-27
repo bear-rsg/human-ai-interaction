@@ -5,7 +5,7 @@
     {# Requires the path to be known to confirm it to the user #}
     {% if request.path %}
         <p>
-            We couldn't find anything at the location <span class="errorpage-path">{{ request.path }}</span>
+            URL: <span class="errorpage-path">{{ request.path }}</span>
         </p>
     {% endif %}
     
@@ -16,6 +16,7 @@
     {# Requires a path to be known in order to email admin #}
     {% if request.path %}
         <p>
+            If you believe this is an error, please contact us for further support: 
             <a href="mailto:{% settings_value 'ADMIN_EMAIL' %}?subject=Human-AI Interaction website (Error)&body=I'd like to report an error at the location: ' {{ request.path }} ' on the Human-AI Interaction website">{% settings_value 'ADMIN_EMAIL' %}</a>
         </p>
     {% endif %}

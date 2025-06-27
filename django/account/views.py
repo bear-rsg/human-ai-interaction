@@ -23,14 +23,6 @@ class AccountUpdateView(LoginRequiredMixin, UpdateView):
         """
         return self.model.objects.get(pk=self.request.user.id)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Experiments history
-        # context['my_experiments_history'] = ... TODO
-
-        return context
-
 
 class AccountUpdateSuccessTemplateView(TemplateView):
     """

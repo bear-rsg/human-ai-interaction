@@ -1,8 +1,6 @@
-from django.contrib.auth.models import AbstractUser, Group, UserManager
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db.models.functions import Upper
 from django.db import models
-from django.core.mail import send_mail
-from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)

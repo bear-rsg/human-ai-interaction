@@ -8,6 +8,7 @@ urlpatterns = [
     # Custom apps
     path('', include('general.urls')),
     path('account/', include('account.urls')),
+    path('experiments/', include('experiments.urls')),
 
     # Django admin
     path('dashboard/', admin.site.urls),

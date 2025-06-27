@@ -31,9 +31,6 @@
         <link rel="stylesheet" type="text/css" href="{% static 'css/custom_small.css' %}">
         <link rel="stylesheet" type="text/css" href="{% static 'css/custom_large.css' %}">
 
-        <!-- Google Search Console Verification -->
-        <meta name="google-site-verification" content="S_XnwPSAf4EKWROBFYlJM2Vz5NdA9ea8UE_TKdL13hY" />
-
         <!--Set the favicon-->
         <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
@@ -49,15 +46,10 @@
 
         <!-- Navigation bar -->
         <nav class="navbar fixed-top navbar-expand-lg">
-
+            <!-- Title -->
             <a class="navbar-brand" href="{% url 'general:welcome' %}">
-                <h1>
-                    Human-AI
-                    <br>
-                    Interaction
-                </h1>
+                <h1>Human-AI<br>Interaction</h1>
             </a>
-
             <!-- Nav toggle button (for small screens) -->
             <button class="navbar-toggler" type="button" title="navbartoggle" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false">
                 <i class="fas fa-bars"></i>
@@ -80,7 +72,7 @@
                     {% if user.is_authenticated %}
                         <!-- Experiments -->
                         <li class="nav-item">
-                            <a class="nav-link{% if "/experiments/" in request.path %} active{% endif %}" href="{% url 'general:about' %}">
+                            <a class="nav-link{% if "/experiments/" in request.path %} active{% endif %}" href="{% url 'experiments:index' %}">
                                 Experiments
                             </a>
                         </li>
@@ -116,31 +108,15 @@
             {% endblock %}
         </main>
 
-        <!-- Footer -->
-        <footer id="footer" class="container-fluid">
-            <!-- Content -->
-            <div id="footer-content" class="container-fluid">
-                <div id="footer-content-logos">
-                    <a href="https://www.birmingham.ac.uk/" target="_blank"><img src="{% static 'images/logos/uob.png' %}" alt="University of Birmingham"></a>
-                </div>
-                <p>
-                    <strong>Human-AI Interaction</strong> is a research project at the <a href="http://www.birmingham.ac.uk">University of Birmingham</a>
-                </p>
-                <p>
-                    This website has been developed by the <a href="http://www.birmingham.ac.uk/bear-software">Research Software Group</a> for the <a href="https://www.birmingham.ac.uk/university/colleges/artslaw/index.aspx">College of Arts and Law</a>
-                </p>
-                <p>
-                    <a href="https://www.birmingham.ac.uk/privacy/index.aspx" target="_blank">Privacy</a> |
-                    <a href="https://www.birmingham.ac.uk/legal/index.aspx" target="_blank">Legal</a> |
-                    <a href="https://www.birmingham.ac.uk/university/governance/policies-regs/information/index.aspx" target="_blank">Freedom of Information</a> |
-                    <a href="{% url 'general:cookies' %}">Cookies</a> |
-                    <a href="{% url 'general:accessibility' %}">Accessibility</a>
-                </p>	
-                <p>
-                    © University of Birmingham {% now "Y" %}
-                </p>
-            </div>
-        </footer>
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-2FR9Y277VF"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-2FR9Y277VF');
+        </script>
+
         <!-- Cookies popup message (must be at bottom of body) -->
         <script src="{% static 'js/cookiesmsg.js' %}"></script>
     </body>

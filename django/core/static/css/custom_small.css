@@ -23,13 +23,7 @@
     }
 
     .nav-link {
-        padding-left: 0.5em;
-        border-left: 3px solid transparent;
-    }
-
-    .nav-link.active {
-        padding-left: 0.5em;
-        border-left: 3px solid black;
+        text-align: center;
     }
 
     /* ---------- Main ---------- */
@@ -52,6 +46,25 @@
 
     #welcome-banner-content-tagline {
         font-size: 1.8em;
+    }
+
+    /* ---------- Experiments ---------- */
+
+    .experiments-index-instance-create-list-item {
+        width: calc(100% - 1.8em);
+    }
+
+    #experiments-index-instance-history-header-search {
+        display: block;
+        margin-bottom: 1em;
+    }
+
+    #experiments-index-instance-history-header-search input {
+        width: calc(100% - 2.3em);
+    }
+
+    #experiments-index-instance-history-header select {
+        width: 100%;
     }
 
 }

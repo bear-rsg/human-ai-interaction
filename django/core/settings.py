@@ -22,10 +22,12 @@ INSTALLED_APPS = [
     # See: https://github.com/praekelt/django-recaptcha/issues/183
     'captchanotimeout',
     'django_recaptcha',
+    'ckeditor',
     'debug_toolbar',
     # Custom apps
     'account',
     'general',
+    'experiments',
 ]
 
 MIDDLEWARE = [
@@ -121,6 +123,81 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/latest/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# CKEditor
+# Image File uploads via CKEditor
+CKEDITOR_UPLOAD_PATH = 'cke_uploads/'  # will be based within MEDIA dir
+CKEDITOR_ALLOW_NONIMAGE_FILES = False  # only allow images to be uploaded
+CKEDITOR_IMAGE_BACKEND = 'ckeditor_uploader.backends.PillowBackend'
+CKEDITOR_THUMBNAIL_SIZE = (100, 100)
+CKEDITOR_FORCE_JPEG_COMPRESSION = True
+CKEDITOR_IMAGE_QUALITY = 90
+SILENCED_SYSTEM_CHECKS = ["ckeditor.W001"]
+# Configuration
+# For full list of configurations, see: https://ckeditor.com/docs/ckeditor4/latest/api/CKEDITOR_config.html
+# For full list of toolbar buttons, see: https://ckeditor.com/latest/samples/toolbarconfigurator/index.html#advanced
+SILENCED_SYSTEM_CHECKS = ["ckeditor.W001"]
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': [
+            {
+                'name': 'styles',
+                'items': [
+                    'TextColor', 'BGColor', 'Bold', 'Italic', 'Underline', 'Strike',
+                    '-',
+                    'Subscript', 'Superscript'
+                ]
+            },
+            {
+                'name': 'clipboard',
+                'items': ['Undo', 'Redo']
+            },
+            {
+                'name': 'paragraph',
+                'items': [
+                    'NumberedList', 'BulletedList',
+                    '-',
+                    'Outdent', 'Indent',
+                    '-',
+                    'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'
+                ]
+            },
+            {
+                'name': 'links',
+                'items': ['Link', 'Unlink', 'Anchor']
+            },
+            {
+                'name': 'editing',
+                'items': ['Find', '-', 'Scayt']
+            },
+            {
+                'name': 'insert',
+                'items': ['Image', 'Table', 'HorizontalRule', 'SpecialChar']
+            },
+            {
+                'name': 'views',
+                'items': ['Source', 'Maximize']
+            }
+        ],
+        'format_tags': 'h2;h3;h4;h5;p',
+        'tabSpaces': 4,
+        'height': '30vh',
+        'width': '100%',
+        'allowedContent': True,
+        'entities_greek': False,
+        'entities_latin': False,
+        'scayt_autoStartup': True,
+        'scayt_sLang': 'en_GB',
+        'uiColor': '#FFFFFF',
+        'language': 'en',
+        'defaultLanguage': 'en',
+        'removePlugins': ','.join([
+            'elementspath',
+        ]),
+        'versionCheck': False,
+    }
+}
 
 
 # Import local_settings.py

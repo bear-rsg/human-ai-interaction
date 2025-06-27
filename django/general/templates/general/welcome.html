@@ -15,7 +15,7 @@
         </div>
         {% if user.is_authenticated %}
             <div id="welcome-banner-content-links">
-                <a href="{% url 'general:welcome' %}">View Experiments</a>
+                <a href="{% url 'experiments:index' %}">View Experiments</a>
             </div>
         {% endif %}
     </div>
@@ -34,6 +34,31 @@
         ...
     </p>
 </section>
+
+<footer id="footer" class="container-fluid">
+    <!-- Content -->
+    <div id="footer-content" class="container-fluid">
+        <div id="footer-content-logos">
+            <a href="https://www.birmingham.ac.uk/" target="_blank"><img src="{% static 'images/logos/uob.png' %}" alt="University of Birmingham"></a>
+        </div>
+        <p>
+            <strong>Human-AI Interaction</strong> is a research project at the <a href="http://www.birmingham.ac.uk">University of Birmingham</a>
+        </p>
+        <p>
+            This website has been developed by the <a href="http://www.birmingham.ac.uk/bear-software">Research Software Group</a> for the <a href="https://www.birmingham.ac.uk/university/colleges/artslaw/index.aspx">College of Arts and Law</a>
+        </p>
+        <p>
+            <a href="https://www.birmingham.ac.uk/privacy/index.aspx" target="_blank">Privacy</a> |
+            <a href="https://www.birmingham.ac.uk/legal/index.aspx" target="_blank">Legal</a> |
+            <a href="https://www.birmingham.ac.uk/university/governance/policies-regs/information/index.aspx" target="_blank">Freedom of Information</a> |
+            <a href="{% url 'general:cookies' %}">Cookies</a> |
+            <a href="{% url 'general:accessibility' %}">Accessibility</a>
+        </p>	
+        <p>
+            © University of Birmingham {% now "Y" %}
+        </p>
+    </div>
+</footer>
 
 <script>
     $(document).ready(function(){

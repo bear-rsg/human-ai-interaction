@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load static %}
+{% block main %}
+
+<div id="experiments-textchat" class="container">
+    <div id="experiments-textchat-header">
+        <div id="experiments-textchat-header-title">
+            {{ experiment_instance.experiment.name }}
+        </div>
+        <div id="experiments-textchat-header-actions">
+            {% if user.is_admin %}
+                <span id="experiments-textchat-header-actions-adminview">
+                    <a href="{% url 'admin:experiments_experimentinstance_change' experiment_instance.id %}" target="_blank" title="View in admin dashboard"><i class="fa-solid fa-gear"></i></a>
+                </span>
+            {% endif %}
+            {% if is_experiment_instance_active %}
+                <span id="experiments-textchat-header-actions-informationlink" title="Show information">
+                    <i class="fa-solid fa-circle-info"></i>
+                </span>
+                {% if user_role_in_experiment_instance == 'participant' %}
+                    <span id="experiments-textchat-header-actions-endexperiment" title="End Experiment">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% if is_experiment_instance_active %}
+    <div id="experiments-textchat-information">
+        <div id="experiments-textchat-information-description">
+            <h3>About Experiment</h3>
+            {{ experiment_instance.experiment.description }}
+        </div>
+        <div id="experiments-textchat-information-instructions">
+            <h3>Instructions</h3>
+            {{ experiment_instance.experiment.instructions | safe }}
+        </div>
+        <button id="experiments-textchat-information-startexperiment"><i class="fa-solid fa-circle-check"></i> Start Experiment</button>
+    </div>
+    {% endif %}
+    <div id="experiments-textchat-chat">
+        <div id="experiments-textchat-chat-messages"></div>
+        <!-- Below the messages, show the appropriate content (e.g. user input, host select, or alert) -->
+        {% if not is_experiment_instance_active %}
+            <div class="experiments-textchat-chat-alert">
+                This exercise is no longer active. You can review past messages but can't send new messages.
+            </div>
+        {% elif user.is_admin and user != experiment_instance.participant and not is_experiment_instance_host_determined %}
+            <div class="experiments-textchat-chat-alert">
+                Please set the host for this experiment:
+                <div>
+                    <button class="sethost" data-host="human"><i class="fa-solid fa-person"></i> Make me the host</button>
+                    <button class="sethost" data-host="ai"><i class="fa-solid fa-robot"></i> Make AI the host</button>
+                </div>
+            </div>
+        {% elif user.is_admin and user != experiment_instance.participant and user != experiment_instance.host %}
+            <div class="experiments-textchat-chat-alert">
+                You are not the participant or host of this experiment. You can review past messages but can't send new messages.
+            </div>
+        {% else %}
+            <div id="experiments-textchat-chat-userinput">
+                <textarea title="Type your message" maxlength="500"></textarea>
+                <button title="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<script>
+$(document).ready(function(){
+
+    var userRoleInExperimentInstance = '{{ user_role_in_experiment_instance }}';
+    var isExperimentInstanceActive  = '{{ is_experiment_instance_active }}' == 'True';
+    var isUserAdmin = '{{ user.is_admin }}' == 'True';
+    var isHostDetermined = false;
+    var isHostAI = false;
+    var isInformationAlreadyShown  = false;
+    var textInput = $('#experiments-textchat-chat-userinput textarea');
+    var chatMessages = $('#experiments-textchat-chat-messages');
+
+    function scrollBottomMessages(){
+        // Scroll to bottom of messages list, to reveal newest messages
+        chatMessages.scrollTop(chatMessages.prop("scrollHeight"));
+    }
+
+    function userInputLock(lockReason){
+        // Use the lock reason to determine text to display to user
+        let textToDisplay = 'Please wait...'
+        if (lockReason == 'receiving_message') textToDisplay = 'Waiting for a message to be received...';
+        else if (lockReason == 'determining_host') textToDisplay = 'Waiting for host to join (this may take a few minutes) ...';
+        // Disable the user input and hide the send button
+        textInput.prop('disabled', true).prop('placeholder', textToDisplay);
+        $('#experiments-textchat-chat-userinput button').hide();
+    }
+
+    function userInputUnlock(){
+        // Enable the user input and show the send button
+        textInput.prop('disabled', false).prop('placeholder', 'Type your message...').focus();
+        $('#experiments-textchat-chat-userinput button').show();
+        $('#experiments-textchat-chat-messages-waiting').remove();
+    }
+
+    function toggleChatAndInformation(){
+        // Switch between viewing the chat and viewing the information
+        $('#experiments-textchat-chat, #experiments-textchat-information').toggle();
+    }
+
+    function waitingForResponse(){
+        // Add an animated icon to the chat to indicate that the user is waiting on a response
+        let waitingId = 'experiments-textchat-chat-messages-waiting';
+        if (isExperimentInstanceActive && getLatestMessage() && getLatestMessage().hasClass('sender') && $(`#${waitingId}`).length == 0){
+            chatMessages.append(`<div id="${waitingId}"><span></span><span></span><span></span></div>`);
+        }
+        scrollBottomMessages();
+    }
+
+    function appendMessageToChat(message){
+        // Ensure this message doesn't already exist to prevent duplicates
+        if (!$(`.experiments-textchat-chat-messages-message[data-id=${message.id}]`).length){
+            // Determine sender/receiver class of this message
+            let senderOrReceiver = message.sender_or_receiver;
+            if (userRoleInExperimentInstance == 'no_role' && isUserAdmin){
+                senderOrReceiver = (message.is_sender_participant ? 'sender' : 'receiver')
+            }
+            // Append new messages HTML to existing messages
+            chatMessages.append(
+                `<div class="experiments-textchat-chat-messages-message ${senderOrReceiver}" data-id="${message.id}">
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-time" title="${message.datetime}">${message.time}</div>
+                </div>`
+            );
+        }
+    }
+
+    function getLatestMessage(){
+        // Return the latest message. If there aren't any messages return false
+        let messages = $('.experiments-textchat-chat-messages-message');
+        return messages.length > 0 ? messages.last() : false;
+    }
+
+    function getMessages(sinceLatestMessage=false){
+        // Build full request URL, including any parameters
+        let url = 'message/list/';
+        // Add latest_message_id parameter
+        let latestMessage = getLatestMessage();
+        if (latestMessage){
+            var latestMessageId = getLatestMessage().attr('data-id');
+            if (typeof latestMessageId !== "undefined") url += `?latest_message_id=${latestMessageId}`;
+        }
+        // Make the AJAX GET request to get messages and display to user
+        $.get(url, function(data){
+            // Add messages to chat
+            if (data.messages.length){
+                data.messages.forEach(function(message){ appendMessageToChat(message) });
+                waitingForResponse();
+            }
+
+            // Set global vars about the host
+            isHostDetermined = data.is_host_determined;
+            isHostAI = data.is_host_ai;
+
+            // Lock/unlock user input
+            // Lock if host has not yet been determined
+            if (!isHostDetermined) userInputLock('determining_host');
+            // Lock if user's message is the most recent and waiting to receive message
+            else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
+            // Lock if user is admin and host and no messages received, as participant must go first
+            else if (isUserAdmin && userRoleInExperimentInstance == 'host' && !getLatestMessage()) userInputLock('receiving_message');
+            // Unlock
+            else userInputUnlock();
+
+            // Show the information panel to participants on page load if chat is empty
+            if (
+                data.messages.length == 0
+                && userRoleInExperimentInstance === 'participant'
+                && !latestMessage
+                && !isInformationAlreadyShown 
+                && isExperimentInstanceActive 
+            ){
+                toggleChatAndInformation();
+                isInformationAlreadyShown  = true;
+            }
+        }).fail(function(){
+            alert("Unable to load messages. Please try refreshing the page or contact us if the problem persists.");
+        });
+    }
+
+    function postMessageAI(){
+        let url = 'message/new/ai/';
+        let postData = {'csrfmiddlewaretoken': '{{ csrf_token }}'}
+        // Make the AJAX POST request to request the AI creates a new message
+        $.post(url, postData, function(data){
+            // Ignore, as data is retrieved automatically via getMessages()
+        }).fail(function(){
+            alert("There's been an error with the experiment. Please report this to the project team.");
+        });
+    }
+
+    function postMessageUser(){
+        // If the message text exists, post it to the server
+        if (textInput.val().length){
+            userInputLock('receiving_message');
+            let url = 'message/new/user/';
+            let postData = {
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'message_text': textInput.val()
+            }
+            // Make the AJAX POST request to create a new message
+            $.post(url, postData, function(data){
+                // Refresh page if experiment instance is no longer active
+                if (data.experiment_instance_active == false){
+                    location.reload();
+                }
+                // If experiment instance is active
+                else {
+                    appendMessageToChat(data.message);
+                    textInput.val('');
+                    if (isHostAI) postMessageAI();
+                    waitingForResponse();
+                }
+            }).fail(function(){
+                alert("Unable to post new messages. Please try refreshing the page and sending the message again or contact us if the problem persists.");
+            });
+        }
+    }
+
+    function postSetHost(host_type){
+        let url = 'sethost/';
+        let postData = {
+            'csrfmiddlewaretoken': '{{ csrf_token }}',
+            'host_type': host_type
+        }
+        // Make the AJAX POST request to create a new message
+        $.post(url, postData, function(data){
+            // Refresh page if host set successfully
+            if (data.success == true) location.reload();
+            else alert("Unable to set the host. It may be that the host has already been set by another user. Please try refreshing the page.");
+        }).fail(function(){
+            alert("Unable to set the host. Please try refreshing the page or contact us if the problem persists.");
+        });
+    }
+
+    // User clicks a button to set the host
+    $('.experiments-textchat-chat-alert button.sethost').on('click', function(){
+        postSetHost($(this).attr('data-host'));
+    });
+
+    // User clicks the input submit button
+    $('#experiments-textchat-chat-userinput button').on('click', function(){
+        postMessageUser();
+    });
+
+    // User presses enter key within the message text input
+    $('#experiments-textchat-chat-userinput textarea').keydown(function(e){
+        if (e.key == "Enter"){
+            e.preventDefault();
+            postMessageUser();
+        }
+    });
+
+    // User clicks information button to show information and hide chat
+    $('#experiments-textchat-header-actions-informationlink').on('click', function(){
+        toggleChatAndInformation();
+    });
+
+    // User clicks 'start experiment' button
+    $('#experiments-textchat-information-startexperiment').on('click', function(){
+        toggleChatAndInformation();
+    });
+
+    // User clicks to end experiment (after confirmation)
+    $('#experiments-textchat-header-actions-endexperiment').on('click', function(){
+        if (confirm("Have you finished the experiment?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue.")){
+            window.location.href = "{% url 'experiments:experimentinstance-completed' pk=experiment_instance.id %}";
+        }
+    });
+
+    // Get all messages on page load
+    getMessages();
+    // Get new messages every 10 seconds
+    setInterval(function(){ getMessages(); }, 10000);
+
+});
+</script>
+
+{% endblock %}

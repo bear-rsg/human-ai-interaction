@@ -26,9 +26,6 @@ ALLOWED_HOSTS = ['*']/['human-ai-interaction.bham.ac.uk']
 # Used by Django Debug Toolbar (comment out to disable DDT)
 INTERNAL_IPS = ["127.0.0.1"]
 
-# Provide the email address for the site admin (e.g. the researcher/research team)
-ADMIN_EMAIL = 'm.perlman@bham.ac.uk'
-
 # Code used to create participant accounts, to restrict who can create an account
 PARTICIPANT_ACCOUNT_CREATE_CODE = '123456'
 
@@ -42,3 +39,34 @@ DATABASES = {
         },
     }
 }
+
+# Experiment related settings
+# Keys used to access 3rd party AIs via their APIs
+EXPERIMENTS_AI_API_KEYS = {
+    'OPENAI': 'insertkeyhere',
+    'GOOGLE': 'insertkeyhere'
+}
+# How many minutes since creation or a latest message should an experiment instance be active
+EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES = 30
+# The maxmimum number of active experiment instances at any given time
+EXPERIMENT_INSTANCES_ACTIVE_MAX = 1
+# How many minutes to allow an admin to manually determine the host of an experiment (admin or AI)
+WAIT_FOR_HOST_TO_BE_DETERMINED_MINUTES = 3
+
+# Email
+# Provide the email address for the site admin (e.g. the researcher/research team)
+ADMIN_EMAIL = 'example@bham.ac.uk'
+# Email configuration (different options for dev vs live environments)
+if DEBUG is True:
+    EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+    EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+    DEFAULT_FROM_EMAIL = 'example@bham.ac.uk'
+    NOTIFICATION_EMAIL = ('example@bham.ac.uk',)
+else:
+    EMAIL_USE_TLS = False
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'bear-mn01.bham.ac.uk'
+    EMAIL_PORT = 25
+    EMAIL_HOST_USER = 'example@bham.ac.uk'
+    DEFAULT_FROM_EMAIL = 'example@bham.ac.uk'
+    NOTIFICATION_EMAIL = ('example@bham.ac.uk',)
