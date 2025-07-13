@@ -4,8 +4,8 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotExist
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
-from django.conf import settings
 from django.core.mail import send_mail
+from django.conf import settings
 from openai import OpenAI
 from google import genai
 from datetime import datetime
@@ -13,13 +13,105 @@ from . import models
 import time
 import io
 import csv
+import random
 
 
 # Reusable values and functions
 
 
-# Establish the AI client
-ai_client = genai.Client(api_key=settings.EXPERIMENTS_AI_API_KEYS['GOOGLE'])
+# Define the AI Clients dict
+# Note, there must be corresponding AiModelProvider objects in the database
+# for each of the ai services listed below, e.g. Google, OpenAI, etc.
+try:
+    ai_clients = {}
+    for ai_model_provider_obj in models.AiModelProvider.objects.all():
+        api_key = ai_model_provider_obj.api_key
+        ai_model_provider = ai_model_provider_obj.name.upper()
+        # Build ai client for each approved ai service
+        ai_client = None
+        if ai_model_provider == 'OPENAI':
+            ai_client = OpenAI(api_key=api_key)
+        elif ai_model_provider == 'GOOGLE':
+            ai_client = genai.Client(api_key=api_key)
+        # If ai client has been defined, add it to dict of ai clients
+        if ai_client:
+            ai_clients[ai_model_provider] = ai_client
+except Exception:
+    pass  # expected to fail sometimes, e.g. if AiModelProvider model not yet added to db
+
+
+def delay_ai_response(response_text):
+    """
+    Wait for a suitable length to mimic how long it could take a human to type the response text
+    """
+    if response_text:
+        # Average human types 3-4 chars per second (source: Google Gemini)
+        delay_seconds = len(response_text) / 4
+        if settings.DEBUG:
+            print(f'\nDelay AI response by: {delay_seconds} seconds\n')
+        time.sleep(delay_seconds)
+
+
+def get_ai_response_google(experiment_instance, ai_model):
+    """
+    Provide conversation data to Google-based AI model and return the response text
+    """
+
+    # Build conversation history (using past messages from user and model)
+    conversation_history = []
+    # Add initial system instruction for the experiment
+    conversation_history.append(experiment_instance.experiment.initial_prompt_for_ai_responder)
+    # Add all messages of this experiment instance
+    for message in experiment_instance.experimentinstancemessages.all():
+        conversation_history.append({
+            'role': 'model' if message.is_sender_ai else 'user',
+            'parts': [{'text': message.text}]
+        })
+
+    try:
+        response = ai_clients['GOOGLE'].models.generate_content(
+            model=ai_model,  # e.g. "gemini-2.0-flash"
+            config=genai.types.GenerateContentConfig(
+                max_output_tokens=500,
+                temperature=0.1
+            ),
+            contents=conversation_history
+        )
+        return response.text.strip()
+
+    except genai.errors.ServerError as e:
+        print(e)
+
+
+def get_ai_response_openai(experiment_instance, ai_model):
+    """
+    Provide conversation data to OpenAI-based AI model and return the response text
+    """
+
+    # Build conversation history (using past messages from user and model)
+    conversation_history = []
+    experiment_instance.experiment.initial_prompt_for_ai_responder
+    # Add initial system instruction for the experiment
+    conversation_history.append({
+        'role': 'system',
+        'content': experiment_instance.experiment.initial_prompt_for_ai_responder
+    })
+    # Add all messages of this experiment instance
+    for message in experiment_instance.experimentinstancemessages.all():
+        conversation_history.append({
+            'role': 'assistant' if message.is_sender_ai else 'user',
+            'content': message.text
+        })
+
+    try:
+        response = ai_clients['OPENAI'].chat.completions.create(
+            model=ai_model,  # e.g. "gpt-4o"
+            messages=conversation_history
+        )
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        print(e)
 
 
 def get_experiment_instance(pk, user):
@@ -34,7 +126,7 @@ def get_experiment_instance(pk, user):
     except ObjectDoesNotExist:
         raise BadRequest('No matching ExperimentInstance object found')
     # Block access if user is a participant and not associated with this ExperimentInstance
-    if user.is_participant and user != experiment_instance.participant:
+    if user.is_participant and user not in [experiment_instance.originator, experiment_instance.responder]:
         raise PermissionDenied()
     return experiment_instance
 
@@ -45,8 +137,8 @@ def get_experiment_instances_all():
     """
 
     return models.ExperimentInstance.objects.all().select_related(
-        'participant',
-        'host',
+        'originator',
+        'responder',
         'experiment'
     ).prefetch_related('experimentinstancemessages')
 
@@ -64,11 +156,11 @@ def get_experiment_instances_active_all(experiment_instances):
 def get_experiment_instances_active_currentuser(experiment_instances, user):
     """
     Filters the passed queryset of ExperimentInstance objects,
-    only including ones where is_active dynamic property is True and current user is the participant.
+    only including ones where is_active property is True and current user is the originator or responder.
     Returns as a list of objects, not a queryset.
     """
 
-    return [e for e in experiment_instances if e.is_active and e.participant == user]
+    return [e for e in experiment_instances if e.is_active and user in [e.originator, e.responder]]
 
 
 def create_message_dict_for_client(message, user=None):
@@ -83,7 +175,7 @@ def create_message_dict_for_client(message, user=None):
         'datetime': message.datetime_created_clean,
         'time': message.time_created_clean,
         'sender_or_receiver': message.sender_or_receiver(user),
-        'is_sender_participant': message.is_sender_participant
+        'is_sender_originator': message.is_sender_originator
     }
 
 
@@ -103,20 +195,19 @@ def experiment_index(request):
     # Build initial querysets
     experiments_all = models.Experiment.objects.all().select_related('modality')
     experiment_instances_history = get_experiment_instances_all()
-    # Get active (all and for those where current user is the participant)
+    # Get active (all and for those where current user is the originator)
     experiment_instances_active_all = get_experiment_instances_active_all(experiment_instances_history)
     experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
     # Limit data in querysets if user is a participant
     if request.user.is_participant:
-        # Participants can only view active experiments
+        # Participants can only view published experiments
         experiments_all = experiments_all.filter(is_published=True)
         # Participants can only view their own history
-        experiment_instances_history = experiment_instances_history.filter(participant=request.user)
+        experiment_instances_history = experiment_instances_history.filter(Q(originator=request.user) | Q(responder=request.user))
     # Add additional data for admins
     elif request.user.is_admin:
         context.update({
-            'experiment_instances_active_host_none': [e for e in experiment_instances_active_all if not e.is_host_determined],
-            'experiment_instances_active_host_currentuser': [e for e in experiment_instances_active_all if e.host == request.user]
+            'experiment_instances_active_responder_none': [e for e in experiment_instances_active_all if not e.is_responder_determined],
         })
 
     # Get a count of all before search and show limits are applied
@@ -130,13 +221,13 @@ def experiment_index(request):
             Q(experiment__description__icontains=search) |
             Q(experiment__instructions__icontains=search) |
 
-            Q(participant__first_name__icontains=search) |
-            Q(participant__last_name__icontains=search) |
-            Q(participant__email__icontains=search) |
+            Q(originator__first_name__icontains=search) |
+            Q(originator__last_name__icontains=search) |
+            Q(originator__email__icontains=search) |
 
-            Q(host__first_name__icontains=search) |
-            Q(host__last_name__icontains=search) |
-            Q(host__email__icontains=search)
+            Q(responder__first_name__icontains=search) |
+            Q(responder__last_name__icontains=search) |
+            Q(responder__email__icontains=search)
         )
     experiment_instances_history = experiment_instances_history.distinct()  # avoids duplicates
 
@@ -163,21 +254,44 @@ def experiment_index(request):
 
 
 @login_required
-def experiment_instance_create(request):
+def experiment_instance_create_or_join(request):
     """
-    Functional view that creates a new ExperimentInstance object
-    and redirects the user to the detail page for this object.
-    If it cannot be created (e.g. too many active ExperimentInstance objects)
-    then it will redirect user back to the experiment index page.
+    Functional view that either:
+    - creates a new ExperimentInstance object
+    - joins the user to an existing ExperimentInstance object, if one is available
+
+    It then redirects the user to the detail page for this ExperimentInstance object
+    (or back to the experiment index page if the object can't be created)
     """
 
-    # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
+    # The experiment_instance will be either the joined or newly created ExperimentInstance object
+    create_experiment_instance = True
+
+    # If there are existing active experiments, consider joining 
     experiment_instances_active_all = get_experiment_instances_active_all(get_experiment_instances_all())
-    experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
-    experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
-    experiment_instances_warning_toomanyactive_currentuser = len(experiment_instances_active_currentuser)
-    if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser:
-        return redirect(reverse('experiments:index'))
+    if experiment_instances_active_all:
+
+        # If there are any existing ExperimentInstance objects without a Responder
+        # either set current user or AI as the Responder
+        experiment_instances_active_awaitingresponder = [e for e in experiment_instances_active_all if not e.is_responder_determined]
+        if len(experiment_instances_active_awaitingresponder):
+            experiment_instance = experiment_instances_active_awaitingresponder[0]
+            # Randomly decides if Responder should be user or AI
+            if random.random() >= settings.PROBABILITY_RESPONDER_IS_AI:
+                experiment_instance.responder = request.user
+                experiment_instance.is_responder_ai = False
+                # User has joined this experiment instance, so no need to create one
+                create_experiment_instance = False
+            else:
+                experiment_instance.is_responder_ai = True
+            experiment_instance.save()
+
+        # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
+        experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
+        experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
+        experiment_instances_warning_toomanyactive_currentuser = len(experiment_instances_active_currentuser)
+        if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser:
+            return redirect(reverse('experiments:index'))
 
     # Get an Experiment object using the experiment_id from the POST request
     try:
@@ -190,28 +304,27 @@ def experiment_instance_create(request):
     except ObjectDoesNotExist:
         raise BadRequest('No matching Experiment object found for provided experiment_id')
 
-    # Create a new ExperimentInstance object
-    experiment_instance = models.ExperimentInstance.objects.create(
-        experiment=experiment,
-        participant=request.user,
-    )
-
-    experiment_instance_url = reverse('experiments:experimentinstance-detail', kwargs={'pk': experiment_instance.id})
-
-    # Email admins to alert them, so they can set a host if needed
-    try:
-        send_mail(
-            'Human-AI Interaction: New Experiment Instance Started',
-            f"A new experiment instance has started and requires a host:\n\nUser: {request.user}\nExperiment: {experiment}\nLink: {request.build_absolute_uri(experiment_instance_url)}\n\nIf a host hasn't been manually selected after {settings.WAIT_FOR_HOST_TO_BE_DETERMINED_MINUTES} minutes, the AI host will be automatically set.",
-            settings.DEFAULT_FROM_EMAIL,
-            settings.NOTIFICATION_EMAIL,
-            fail_silently=False
+    # Create a new ExperimentInstance object (if one hasn't already been joined)
+    if create_experiment_instance:
+        experiment_instance = models.ExperimentInstance.objects.create(
+            experiment=experiment,
+            originator=request.user,
         )
-    except Exception:
-        print("Failed to send email")
 
-    # Redirect user to the detail view of the newly created ExperimentInstance
-    return redirect(experiment_instance_url)
+        # Email admins to alert them, so they can set a responder manually, if needed
+        try:
+            send_mail(
+                'Human-AI Interaction: New Experiment Instance Started',
+                f"A new experiment instance has started and requires a responder:\n\nUser: {request.user}\nExperiment: {experiment}\nLink: {request.build_absolute_uri(experiment_instance_url)}\n\nIf a responder hasn't been found after {settings.WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES} minutes, the AI responder will be automatically set.",
+                settings.DEFAULT_FROM_EMAIL,
+                settings.NOTIFICATION_EMAIL,
+                fail_silently=False
+            )
+        except Exception:
+            print("Failed to send email")
+
+    # Redirect user to the detail view of the created/joined ExperimentInstance
+    return redirect(reverse('experiments:experimentinstance-detail', kwargs={'pk': experiment_instance.id}))
 
 
 @login_required
@@ -225,26 +338,26 @@ def experiment_instance_detail(request, pk):
     context = {
         'experiment_instance': experiment_instance,
         'is_experiment_instance_active': experiment_instance.is_active,
-        'is_experiment_instance_host_determined': experiment_instance.is_host_determined,
-        'user_role_in_experiment_instance': experiment_instance.user_role(request.user)
+        'is_experiment_instance_responder_determined': experiment_instance.is_responder_determined,
+        'user_position_in_experiment_instance': experiment_instance.user_position_in_experiment_instance(request.user)
     }
     return render(request, 'experiments/textchat.html', context)
 
 
 @login_required
-def experiment_instance_sethost(request, pk):
+def experiment_instance_setresponder(request, pk):
     """
-    Functional view that sets the ExperimentInstance host,
+    Functional view that sets the ExperimentInstance responder,
     either as current user or AI. Returns a success/fail data via JSON.
     """
 
     success = False
     experiment_instance = get_experiment_instance(pk, request.user)
-    host_type = request.POST.get('host_type', None)
-    # If user is admin, a valid host_type provided, user isn't the participant, and host is not yet determined
-    if request.user.is_admin and host_type in ['human', 'ai'] and request.user != experiment_instance.participant and not experiment_instance.is_host_determined:
-        experiment_instance.host = request.user if host_type == 'human' else None
-        experiment_instance.is_host_ai = host_type == 'ai'
+    responder_type = request.POST.get('responder_type', None)
+    # If user is admin, a valid responder_type provided, user isn't the originator, and responder is not yet determined
+    if request.user.is_admin and responder_type in ['human', 'ai'] and request.user != experiment_instance.originator and not experiment_instance.is_responder_determined:
+        experiment_instance.responder = request.user if responder_type == 'human' else None
+        experiment_instance.is_responder_ai = responder_type == 'ai'
         experiment_instance.save()
         success = True
     # Return data as JSON
@@ -268,26 +381,6 @@ def experiment_instance_completed(request, pk):
 
 
 @login_required
-def experiment_instance_feedback(request, pk):
-    """
-    Functional view that stores feedback from a participant of an ExperimentInstance
-    and redirects the user to the experiments index page
-    """
-
-    text = request.POST.get('text', None)
-    if text:
-        experiment_instance = get_experiment_instance(pk, request.user)
-        models.ExperimentInstanceParticipantFeedback.objects.create(
-            experiment_instance=experiment_instance,
-            participant=request.user,
-            text=text
-        )
-
-    # Redirect user to the detail view of the newly created ExperimentInstance
-    return redirect(reverse('experiments:index'))
-
-
-@login_required
 def experiment_instance_message_list(request, pk):
     """
     Functional view that returns a list of ExperimentInstanceMessage objects
@@ -296,9 +389,9 @@ def experiment_instance_message_list(request, pk):
 
     experiment_instance = get_experiment_instance(pk, request.user)
 
-    # Automatically set the host
-    if experiment_instance.is_wait_for_host_to_be_determined_expired:
-        experiment_instance.is_host_ai = True
+    # Automatically set the responder
+    if experiment_instance.is_wait_for_responder_to_be_determined_expired:
+        experiment_instance.is_responder_ai = True
         experiment_instance.save()
 
     # Get all messages for experiment instance
@@ -314,8 +407,9 @@ def experiment_instance_message_list(request, pk):
     return JsonResponse(
         {
             'messages': messages,
-            'is_host_determined': experiment_instance.is_host_determined,
-            'is_host_ai': experiment_instance.is_host_ai,
+            'is_responder_determined': experiment_instance.is_responder_determined,
+            'is_responder_ai': experiment_instance.is_responder_ai,
+            'timer': experiment_instance.timer
         }, safe=False
     )
 
@@ -360,71 +454,26 @@ def experiment_instance_message_new_ai(request, pk):
     # Get all messages for experiment instance
     experiment_instance = get_experiment_instance(pk, request.user)
 
-    #OpenAI TODO - finish or delete
-    # openai_client = OpenAI(api_key=settings.EXPERIMENTS_AI_API_KEYS['OPENAI'])
-    # response = openai_client.responses.create(
-    #     model="gpt-4o",
-    #     instructions="You are a coding assistant that talks like a pirate.",
-    #     input="How do I check if a Python object is an instance of a class?",
-    # )
-    # response_text = response.output_text
+    # Build response text (using the appropriate AI model provider for this experiment instance)
+    response_text = None
+    ai_model_provider = experiment_instance.experiment.ai_model.ai_model_provider.name.upper()
+    ai_model = experiment_instance.experiment.ai_model.name
+    if ai_model_provider == 'GOOGLE':
+        response_text = get_ai_response_google(experiment_instance, ai_model)
+    elif ai_model_provider == 'OPENAI':
+        response_text = get_ai_response_openai(experiment_instance, ai_model)
 
-    # Google
-    try:
-
-        # Build conversation history (using past messages from user and model)
-        conversation_history = []
-        # Add initial instruction for the experiment
-        conversation_history.append(experiment_instance.experiment.initial_prompt_for_ai_host)
-        # Add al messages of this experiment instance
-        for message in experiment_instance.experimentinstancemessages.all():
-            conversation_history.append({
-                'role': 'model' if message.is_sender_ai else 'user',
-                'parts': [{'text': message.text}]
-            })
-
-        # Get response text from LLM
-        response = ai_client.models.generate_content(
-            model="gemini-2.0-flash",
-            config=genai.types.GenerateContentConfig(
-                # system_instruction="We are playing a game. You must guess a random number between 1 and 100. You must not talk about anything else. You must keep your answer brief. You must only say a random whole number between 1 and 100.",
-                max_output_tokens=500,
-                temperature=0.1
-            ),
-            contents=conversation_history  # experiment_instance.experimentinstancemessages.last().text
+    # Create a new ExperimentInstanceMessage object with the response text
+    success = False
+    delay_ai_response(response_text)
+    if response_text:
+        models.ExperimentInstanceMessage.objects.create(
+            experiment_instance=experiment_instance,
+            sender=None,
+            is_sender_ai=True,
+            text=response_text
         )
-        response_text = response.text.strip()
-
-        # Wait for a suitable length to mimic how long it could take a human to type the response text
-        delay_seconds = len(response_text) / 10
-        print(f'\nDelay AI response by: {delay_seconds} seconds\n')
-        time.sleep(delay_seconds)
-
-        try:
-            # Create a new ExperimentInstanceMessage object with the response text
-            models.ExperimentInstanceMessage.objects.create(
-                experiment_instance=experiment_instance,
-                sender=None,
-                is_sender_ai=True,
-                text=response_text
-            )
-            success = True
-        except Exception:
-            success = False
-
-    except genai.errors.ServerError as e:
-        success = False
-        # Email admins to alert them, so they can set a host if needed
-        try:
-            send_mail(
-                'Human-AI Interaction: Error using AI API',
-                f"An error has occurred when trying to use an external AI API:\n\nError message: {e}\n\nPlease contact the software developer if you believe this is a problem.",
-                settings.DEFAULT_FROM_EMAIL,
-                settings.NOTIFICATION_EMAIL,
-                fail_silently=False
-            )
-        except Exception:
-            print("Failed to send email")
+        success = True
 
     # Return data as JSON
     return JsonResponse({'success': success}, safe=False)
@@ -445,8 +494,8 @@ def experiment_instance_exportdata(request):
     if experiment_instance_id:
         data = data.filter(experiment_instance_id=experiment_instance_id)
     if request.user.is_participant:
-        data = data.filter(experiment_instance__participant=request.user)
-    data = [[d.experiment_instance_id, d.id, d.sender_role, d.datetime_created_clean, d.text.strip()] for d in data]
+        data = data.filter(Q(experiment_instance__originator=request.user) | Q(experiment_instance__responder=request.user))
+    data = [[d.experiment_instance_id, d.id, d.sender_position, d.datetime_created_clean, d.text.strip()] for d in data]
 
     # Create an in-memory text buffer (StringIO for CSV writer)
     csv_buffer = io.StringIO()

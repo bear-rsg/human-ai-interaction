@@ -35,6 +35,7 @@ class User(AbstractUser):
     objects = CustomUserManager()  # Custom user manager used to allow for case-insensitive usernames
 
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, blank=True, null=True)
+    role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, blank=True, null=True)
 
     @property
     def name(self):
@@ -45,8 +46,7 @@ class User(AbstractUser):
         elif self.last_name:
             return self.last_name
         else:
-            # If no first or last name provided, return first half of email
-            return self.username.split('@')[0]  # e.g. mike.allaway in mike.allaway@bham.ac.uk
+            return self.username
 
     @property
     def is_admin(self):
@@ -60,10 +60,6 @@ class User(AbstractUser):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Force email and username to be lower case and identical, so users can login with email
-        self.email = self.email.strip().lower()
-        self.username = self.email
-
         # User Roles (to be used below)
         role_admin = UserRole.objects.get(name='admin')
         role_participant = UserRole.objects.get(name='participant')
@@ -85,4 +81,4 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     class Meta:
-        ordering = [Upper('first_name'), Upper('last_name'), Upper('email'), 'id']
+        ordering = [Upper('username'), 'id']

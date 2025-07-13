@@ -6,27 +6,32 @@
 
 <section class="container">
     <h2>Login</h2>
-</section>
-
-<section class="container">
+    <p>
+        Accounts are anonymous, so if you've forgotten your username or password you'll need to create a new account. Please contact us for assistance.
+    </p>
     <form method="post" class="full-form">
         {% csrf_token %}
         {{ form.non_field_errors }}
         <p>
             {{ form.username.errors }}
-            <label for="{{ form.username.id_for_label }}">Email:</label>
+            <label for="{{ form.username.id_for_label }}">Username:</label>
             {{ form.username }}
-            <a href="mailto:{% settings_value 'ADMIN_EMAIL' %}?subject=Human-AI Interaction: User has forgotten email address&body=I have forgotten the email address that is associated with my account. Please can you remind me. My name is: ">Forgot?</a>
         </p>
         <p>
             {{ form.password.errors }}
             <label for="{{ form.password.id_for_label }}">Password:</label>
             {{ form.password }}
-            <a href="{% url 'account:reset-password-request' %}">Forgot?</a>
         </p>
         <button type="submit">Login</button>
     </form>
-    <a href="{% url 'account:create' %}" id="account-login-createlink">Create an account</a>
+</section>
+
+
+<section class="container">
+    <h2>Create Account</h2>
+    <p>
+        If you don't yet have an account, please <a href="{% url 'account:create' %}" id="account-login-createlink">create an account</a>
+    </p>
 </section>
 
 {% endblock %}

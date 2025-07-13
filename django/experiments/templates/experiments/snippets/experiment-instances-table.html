@@ -7,8 +7,8 @@
                     <th>Experiment</th>
                     <th>Started</th>
                     <th>Messages</th>
-                    {% if user.is_admin %}<th>Host</th>{% endif %}
-                    {% if user.is_admin %}<th>Participant</th>{% endif %}
+                    {% if user.is_admin %}<th>Originator</th>{% endif %}
+                    {% if user.is_admin %}<th>Responder</th>{% endif %}
                     <th>Status</th>
                     <th>Export Data</th>
                     <th>View Experiment</th>
@@ -20,8 +20,8 @@
                     <td>{{ experiment_instance.experiment }}</td>
                     <td>{{ experiment_instance.datetime_created }}</td>
                     <td>{{ experiment_instance.count_messages }}</td>
-                    {% if user.is_admin %}<td>{{ experiment_instance.host_name }}</td>{% endif %}
-                    {% if user.is_admin %}<td><a href="{% url 'admin:account_user_change' experiment_instance.participant.id %}">{{ experiment_instance.participant }}</a></td>{% endif %}
+                    {% if user.is_admin %}<td>{{ experiment_instance.originator }}</td>{% endif %}
+                    {% if user.is_admin %}<td>{{ experiment_instance.responder_name }}</td>{% endif %}
                     <td>{{ experiment_instance.is_active_html | safe }}</td>
                     <td><a href="{% url 'experiments:experimentinstance-exportdata' %}?experiment_instance_id={{ experiment_instance.id }}">Export <i class="fa-solid fa-file-arrow-down"></i></a></td>
                     <td><a href="{% url 'experiments:experimentinstance-detail' pk=experiment_instance.id %}">View <i class="fa-solid fa-square-arrow-up-right"></i></a></td>

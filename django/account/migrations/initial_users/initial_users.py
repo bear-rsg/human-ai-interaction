@@ -13,25 +13,31 @@ INITIAL_USERS = [
 
     # Admins
     {
+        "username": "m.j.allaway@bham.ac.uk",
+        "password": make_password('ChangeMe345'),
+
         "first_name": "Mike",
         "last_name": "Allaway",
         "email": "m.j.allaway@bham.ac.uk",
         "role": "admin",
-        "password": make_password('ChangeMe345')
     },
     {
+        "username": "m.perlman@bham.ac.uk",
+        "password": make_password('ChangeMe744'),
+
         "first_name": "Marcus",
         "last_name": "Perlman",
         "email": "m.perlman@bham.ac.uk",
         "role": "admin",
-        "password": make_password('ChangeMe744')
     },
     {
+        "username": "m.fuoli@bham.ac.uk",
+        "password": make_password('ChangeMe859'),
+
         "first_name": "Matteo",
         "last_name": "Fuoli",
         "email": "m.fuoli@bham.ac.uk",
         "role": "admin",
-        "password": make_password('ChangeMe859')
     },
 
 ]

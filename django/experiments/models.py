@@ -8,6 +8,54 @@ import datetime
 import textwrap
 
 
+class AiModelProvider(models.Model):
+    """
+    The organisation that provides AI models, e.g. Google, OpenAI
+    """
+
+    related_name = 'aimodelproviders'
+
+    name = models.CharField(max_length=200)
+    api_key = models.TextField(blank=True, null=True, verbose_name='API key')
+
+    datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
+    datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
+
+    admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'AI Model Provider'
+        verbose_name_plural = 'AI Model Providers'
+        ordering = ('name', 'id')
+
+
+class AiModel(models.Model):
+    """
+    The specific AI model offered by an AI service used within an experiment, e.g. Google's gemini-2.0-flash
+    """
+
+    related_name = 'aimodels'
+
+    name = models.CharField(max_length=200)
+    ai_model_provider = models.ForeignKey(AiModelProvider, related_name=related_name, on_delete=models.PROTECT, verbose_name='AI model provider')
+
+    datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
+    datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
+
+    admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
+
+    def __str__(self):
+        return f'{self.ai_model_provider.name} - {self.name}'
+
+    class Meta:
+        verbose_name = 'AI Model'
+        verbose_name_plural = 'AI Models'
+        ordering = ('ai_model_provider', 'name', 'id')
+
+
 class Modality(models.Model):
     """
     The type of modality/media used within an experiment. E.g. text, audio, video, etc.
@@ -33,7 +81,7 @@ class Modality(models.Model):
 
 class Experiment(models.Model):
     """
-    A type of activity that participants complete, with a clearly defined set of instructions to follow
+    A type of activity that users complete, with a clearly defined set of instructions to follow
     """
 
     related_name = 'experiments'
@@ -48,10 +96,12 @@ class Experiment(models.Model):
         blank=True, null=True,
         help_text="Detailed instructions to participants to complete this experiment"
     )
-    initial_prompt_for_ai_host = models.TextField(
+    ai_model = models.ForeignKey(AiModel, related_name=related_name, on_delete=models.PROTECT, verbose_name='AI model')
+    initial_prompt_for_ai_responder = models.TextField(
         blank=True, null=True,
-        help_text="Provide the initial prompt to send to the AI host to explain how they should behave in this experiment"
+        help_text="Provide the initial prompt to send to the AI responder to explain how they should behave in this experiment"
     )
+    survey_url = models.URLField(help_text="Provide a URL for the associated survey, e.g. Qualtrics. This will be embeded in the website and completed by participants following each experiment instance.")
     is_published = models.BooleanField(default=True)
 
     datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
@@ -72,15 +122,15 @@ class Experiment(models.Model):
 
 class ExperimentInstance(models.Model):
     """
-    An instance of a participant completing an Experiment
+    An instance of a user completing an Experiment
     """
 
     related_name = 'experimentinstances'
 
     experiment = models.ForeignKey(Experiment, related_name=related_name, on_delete=models.PROTECT)
-    participant = models.ForeignKey(User, related_name=f'{related_name}_participant', on_delete=models.PROTECT)
-    host = models.ForeignKey(User, related_name=f'{related_name}_host', blank=True, null=True, on_delete=models.PROTECT)
-    is_host_ai = models.BooleanField(blank=True, null=True)
+    originator = models.ForeignKey(User, related_name=f'{related_name}_originator', on_delete=models.PROTECT)
+    responder = models.ForeignKey(User, related_name=f'{related_name}_responder', blank=True, null=True, on_delete=models.PROTECT)
+    is_responder_ai = models.BooleanField(blank=True, null=True)
     is_ended_by_user = models.BooleanField(default=False)
 
     datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
@@ -88,32 +138,32 @@ class ExperimentInstance(models.Model):
 
     admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
 
-    def user_role(self, current_user):
-        """ The role of the current user in this experiment instance, e.g. participant, host, or no_role """
-        if current_user == self.participant:
-            return 'participant'
-        elif current_user == self.host:
-            return 'host'
+    def user_position_in_experiment_instance(self, current_user):
+        """ The position of the current user in this experiment instance, e.g. originator, responder, or no_position """
+        if current_user == self.originator:
+            return 'originator'
+        elif current_user == self.responder:
+            return 'responder'
         else:
-            return 'no_role'
+            return 'no_position'
 
     @property
-    def is_host_determined(self):
-        """ Return True if the host has been determined (as a user or AI) else return False """
-        return True if self.is_host_ai or self.host else False
+    def is_responder_determined(self):
+        """ Return True if the responder has been determined (as a user or AI) else return False """
+        return True if self.is_responder_ai or self.responder else False
 
     @property
-    def is_wait_for_host_to_be_determined_expired(self):
-        """ Return True if the time allowed for admin to choose a host has expired and so now host must be AI """
-        return not self.is_host_determined and self.datetime_created <= now() - datetime.timedelta(minutes=settings.WAIT_FOR_HOST_TO_BE_DETERMINED_MINUTES)
+    def is_wait_for_responder_to_be_determined_expired(self):
+        """ Return True if the time allowed for admin to choose a responder has expired and so now responder must be AI """
+        return not self.is_responder_determined and self.datetime_created <= now() - datetime.timedelta(minutes=settings.WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES)
 
     @property
-    def host_name(self):
-        if self.is_host_ai:
+    def responder_name(self):
+        if self.is_responder_ai:
             return 'AI'
-        elif self.host:
-            return self.host.name
-        elif not self.is_host_determined:
+        elif self.responder:
+            return self.responder.name
+        elif not self.is_responder_determined:
             return '-'
 
     @property
@@ -121,13 +171,13 @@ class ExperimentInstance(models.Model):
         # Inactive if user has manually ended the experiment
         if self.is_ended_by_user:
             return False
-        # Inactive if the latest message was created over 30 minutes ago
-        latest_message = self.experimentinstancemessages.last()
-        if latest_message:
-            if latest_message.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES):
+        # Inactive if the first message was created more than the allowed time
+        first_message = self.experimentinstancemessages.first()
+        if first_message:
+            if first_message.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE):
                 return False
         # Inactive if there are no messages and the instance was created over 30 minutes ago
-        elif self.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES):
+        elif self.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_SINCE_CREATED):
             return False
         return True
 
@@ -142,19 +192,37 @@ class ExperimentInstance(models.Model):
     def count_messages(self):
         return self.experimentinstancemessages.count()
 
+    @property
+    def datetime_started(self):
+        if self.count_messages > 0:
+            return self.experimentinstancemessages.first().datetime_created
+
+    @property
+    def timer(self):
+        first_message = self.experimentinstancemessages.first()
+        timer_in_seconds = settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE * 60
+        if first_message:
+            return max(
+                0,
+                timer_in_seconds - int((now() - self.datetime_started).total_seconds())
+            )
+        else:
+            return timer_in_seconds
+
+
     def get_absolute_url(self):
         return reverse('experiments:experimentinstance-detail', kwargs={'pk': str(self.id)})
 
     def __str__(self):
-        return f'#{self.id} --- {self.experiment.name} --- Participant: {self.participant} --- AI Host: {self.is_host_ai}'
+        return f'#{self.id} --- {self.experiment.name} --- Originator: {self.originator} --- Responder: {self.responder_name}'
 
     def save(self, *args, **kwargs):
-        # Ensure there can't be a user assigned to the host if an AI is already marked as host
-        if self.is_host_ai:
-            self.host = None
-        # Ensure the participant cannot also be the host
-        if self.participant == self.host:
-            self.host = None
+        # Ensure there can't be a user assigned to the responder if an AI is already marked as responder
+        if self.is_responder_ai:
+            self.responder = None
+        # Ensure the originator cannot also be the responder
+        if self.originator == self.responder:
+            self.responder = None
         super().save(*args, **kwargs)
 
     class Meta:
@@ -163,7 +231,7 @@ class ExperimentInstance(models.Model):
 
 class ExperimentInstanceMessage(models.Model):
     """
-    A message sent by a participant or host within an ExperimentInstance
+    A message sent by a originator or responder within an ExperimentInstance
     """
 
     related_name = 'experimentinstancemessages'
@@ -183,14 +251,14 @@ class ExperimentInstanceMessage(models.Model):
         return 'sender' if current_user and current_user == self.sender else 'receiver'
 
     @property
-    def is_sender_participant(self):
-        """ Whether the sender of the message is the participant """
-        return self.sender == self.experiment_instance.participant
+    def is_sender_originator(self):
+        """ Whether the sender of the message is the originator in the experiment instance """
+        return self.sender == self.experiment_instance.originator
 
     @property
-    def sender_role(self):
-        """ Whether the sender of the message is the participant """
-        return 'participant' if self.is_sender_participant else 'host'
+    def sender_position(self):
+        """ Whether the sender of the message is the originator in the experiment instance """
+        return 'originator' if self.is_sender_originator else 'responder'
 
     @property
     def time_created_clean(self):
@@ -207,27 +275,3 @@ class ExperimentInstanceMessage(models.Model):
 
     class Meta:
         ordering = ('datetime_created', 'id')
-
-
-class ExperimentInstanceParticipantFeedback(models.Model):
-    """
-    A participant provides feedback after completing an Experiment
-    """
-
-    related_name = 'experimentinstanceparticipantfeedback'
-
-    experiment_instance = models.ForeignKey(ExperimentInstance, related_name=related_name, on_delete=models.PROTECT)
-    participant = models.ForeignKey(User, related_name=f'{related_name}_participant', on_delete=models.PROTECT)
-    text = models.TextField()
-
-    datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
-    datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
-
-    admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
-
-    def __str__(self):
-        return f'Feedback for "{self.experiment_instance.experiment.name}" from: {self.participant}'
-
-    class Meta:
-        ordering = ('-datetime_created', '-id')
-        verbose_name_plural = 'experiment instance participant feedback'

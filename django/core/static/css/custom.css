@@ -3,7 +3,7 @@
 
 html, body {
     font-family: 'Inter', 'Helvetica', sans-serif;
-    background: #101010;
+    background: #000;
     color: white;
     margin: 0;
     font-weight: 300;
@@ -287,7 +287,7 @@ form.full-form ul {
 }
 
 form.full-form .helptext {
-    color: #505050;
+    color: #CCC;
     font-size: 0.85em;
     font-style: italic;
     margin: 0.2em;
@@ -658,6 +658,20 @@ main section {
     height: fit-content;
 }
 
+#experiments-textchat-header-title {
+    font-weight: bold;
+    font-size: 1.5em;
+    display: inline-block;
+    width: calc(100% - 23.5rem);
+}
+
+#experiments-textchat-header-timer {
+    display: inline-block;
+    width: 12em;
+    text-align: center;
+    font-weight: bold;
+}
+
 #experiments-textchat-header-actions {
     display: inline-block;
     text-align: right;
@@ -679,16 +693,9 @@ main section {
     color: var(--color-primary);
 }
 
-#experiments-textchat-header-title {
-    font-weight: bold;
-    font-size: 1.5em;
-    display: inline-block;
-    width: calc(100% - 10.5rem);
-}
-
 #experiments-textchat-chat-messages {
     padding: 1em;
-    height: calc(90vh - 13em);
+    height: calc(90vh - 16em);
     overflow: auto;
 }
 
@@ -829,6 +836,20 @@ main section {
     opacity: 0.8;
 }
 
+#experiments-textchat-chat-endexperiment {
+    color: var(--color-secondary-light);
+    text-align: center;
+    cursor: pointer;
+    margin-top: 1.5em;
+    font-size: 0.95em;
+    opacity: 0.8;
+}
+
+#experiments-textchat-chat-endexperiment:hover {
+    text-decoration: underline;
+    opacity: 1;
+}
+
 .experiments-textchat-chat-alert {
     text-align: center;
     color: var(--color-primary);
@@ -875,32 +896,9 @@ main section {
 
 /* Completed */
 
-#experiments-completed-feedbackform textarea {
-    width: 40em;
-    max-width: 100%;
-    height: 8em;
-    display: block;
-    background: #303030;
-    color: white;
-    border: none;
-    resize: none;
-    padding: 1em;
-    margin: 4em auto 1em auto;
-    border-radius: 1em;
-
-}
-
-#experiments-completed-nofeedback {
-    text-align: center;
-    margin-top: 6em;
-}
-
-#experiments-completed-nofeedback a {
-    color: #AAA;
-    text-decoration: underline;
-    font-weight: normal;
-    width: fit-content;
-    font-size: 0.9em;
+#experiments-completed-survey {
+    width: 100%;
+    height: 65vh;
 }
 
 /* ---------- Footer ---------- */

@@ -5,32 +5,12 @@ from django.contrib.auth.views import (PasswordChangeView, PasswordResetView, Pa
 from account import (forms, models)
 
 
-class AccountUpdateView(LoginRequiredMixin, UpdateView):
+class AccountTemplateView(TemplateView):
     """
     Class-based view to show the account template
-    This allows users to update their own details,
-    which is why it's an UpdateView and uses get_object to specify current user
     """
 
     template_name = 'account/account.html'
-    model = models.User
-    form_class = forms.PublicUserChangeForm
-    success_url = reverse_lazy('account:account-success')
-
-    def get_object(self):
-        """
-        Return the current user
-        """
-        return self.model.objects.get(pk=self.request.user.id)
-
-
-class AccountUpdateSuccessTemplateView(TemplateView):
-    """
-    Class-based view to show the account success template
-    This is when the user updates their account details on the account page
-    """
-
-    template_name = 'account/account-success.html'
 
 
 class UserCreateView(CreateView):

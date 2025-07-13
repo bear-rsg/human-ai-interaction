@@ -10,20 +10,18 @@
 
 <section class="container" id="account-mydetails">
     <h3>My Details</h3>
-    <form method="post" class="full-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit"><i class="fas fa-check"></i> Save changes</button>
-    </form>
     <p>
-        <a href="{% url 'account:change-password' %}">Change password</a>
+        <strong>Username:</strong> <span>{{ user.username }}</span>
+    </p>
+    <p>
+        <strong>Password:</strong> <span><a href="{% url 'account:change-password' %}">Change password</a></span>
     </p>
 </section>
 
 <section class="container" id="account-logout">
     <h3>Logout</h3>
     <p>
-        Thanks for using Human-AI Interaction platform - see you soon!
+        Thanks for using Human-AI Interaction platform.
     </p>
     <p>
         <!-- Logout must be a form that sends a post request, or will not work -->

@@ -32,7 +32,7 @@
                         {{ experiment.modality.icon | safe }} {{ experiment.modality.name | title }} 
                     </div>
                     {% if not experiment_instances_warning_toomanyactive_allusers and not experiment_instances_warning_toomanyactive_currentuser %}
-                        <form action="{% url 'experiments:experimentinstance-create' %}" method="post">
+                        <form action="{% url 'experiments:experimentinstance-createorjoin' %}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="experiment_id" value="{{ experiment.id }}">
                             <button class="experiments-index-instance-create-list-item-start" type="submit">
@@ -46,14 +46,9 @@
     </div>
 
     {% if user.is_admin %}
-        <div id="experiments-index-instance-host-none">
-            <h2>Active Experiments Waiting for a Host</h2>
-            {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-data' data=experiment_instances_active_host_none %}
-        </div>
-
-        <div id="experiments-index-instance-host-currentuser">
-            <h2>Active Experiments I'm Hosting</h2>
-            {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-datax' data=experiment_instances_active_host_currentuser %}
+        <div id="experiments-index-instance-responder-none">
+            <h2>Active Experiments Waiting for a Responder</h2>
+            {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-data' data=experiment_instances_active_responder_none %}
         </div>
     {% endif %}
 

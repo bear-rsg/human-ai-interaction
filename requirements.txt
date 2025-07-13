@@ -9,3 +9,5 @@ django-recaptcha~=4.0.0
 django-ckeditor~=6.7.2
 openai~=1.79.0
 google-genai~=1.16.1
+psycopg~=3.2.9
+gunicorn~=23.0.0

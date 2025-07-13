@@ -7,6 +7,7 @@
         <div id="experiments-textchat-header-title">
             {{ experiment_instance.experiment.name }}
         </div>
+        <div id="experiments-textchat-header-timer"></div>
         <div id="experiments-textchat-header-actions">
             {% if user.is_admin %}
                 <span id="experiments-textchat-header-actions-adminview">
@@ -17,11 +18,6 @@
                 <span id="experiments-textchat-header-actions-informationlink" title="Show information">
                     <i class="fa-solid fa-circle-info"></i>
                 </span>
-                {% if user_role_in_experiment_instance == 'participant' %}
-                    <span id="experiments-textchat-header-actions-endexperiment" title="End Experiment">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                    </span>
-                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -40,27 +36,33 @@
     {% endif %}
     <div id="experiments-textchat-chat">
         <div id="experiments-textchat-chat-messages"></div>
-        <!-- Below the messages, show the appropriate content (e.g. user input, host select, or alert) -->
+        <!-- Below the messages, show the appropriate content (e.g. user input, responder select, or alert) -->
         {% if not is_experiment_instance_active %}
             <div class="experiments-textchat-chat-alert">
                 This exercise is no longer active. You can review past messages but can't send new messages.
             </div>
-        {% elif user.is_admin and user != experiment_instance.participant and not is_experiment_instance_host_determined %}
+        {% elif user.is_admin and user != experiment_instance.originator and not is_experiment_instance_responder_determined %}
             <div class="experiments-textchat-chat-alert">
-                Please set the host for this experiment:
+                Please set the responder for this experiment:
                 <div>
-                    <button class="sethost" data-host="human"><i class="fa-solid fa-person"></i> Make me the host</button>
-                    <button class="sethost" data-host="ai"><i class="fa-solid fa-robot"></i> Make AI the host</button>
+                    <button class="setresponder" data-responder="human"><i class="fa-solid fa-person"></i> Make me the responder</button>
+                    <button class="setresponder" data-responder="ai"><i class="fa-solid fa-robot"></i> Make AI the responder</button>
                 </div>
             </div>
-        {% elif user.is_admin and user != experiment_instance.participant and user != experiment_instance.host %}
+        {% elif user.is_admin and user != experiment_instance.originator and user != experiment_instance.responder %}
             <div class="experiments-textchat-chat-alert">
-                You are not the participant or host of this experiment. You can review past messages but can't send new messages.
+                You are not the originator or responder of this experiment. You can review past messages but can't send new messages.
             </div>
         {% else %}
             <div id="experiments-textchat-chat-userinput">
                 <textarea title="Type your message" maxlength="500"></textarea>
                 <button title="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        {% endif %}
+
+        {% if user == experiment_instance.originator or user == experiment_instance.responder %}
+            <div id="experiments-textchat-chat-endexperiment">
+                End chat and proceed to survey <i class="fa-solid fa-circle-arrow-right"></i>
             </div>
         {% endif %}
     </div>
@@ -70,14 +72,33 @@
 <script>
 $(document).ready(function(){
 
-    var userRoleInExperimentInstance = '{{ user_role_in_experiment_instance }}';
+    var userRoleInExperimentInstance = '{{ user_position_in_experiment_instance }}';
     var isExperimentInstanceActive  = '{{ is_experiment_instance_active }}' == 'True';
     var isUserAdmin = '{{ user.is_admin }}' == 'True';
-    var isHostDetermined = false;
-    var isHostAI = false;
+    var isResponderDetermined = false;
+    var isResponderAI = false;
     var isInformationAlreadyShown  = false;
     var textInput = $('#experiments-textchat-chat-userinput textarea');
     var chatMessages = $('#experiments-textchat-chat-messages');
+    var timeLeft;
+    const timerId = setInterval(countdown, 1000);
+
+    function countdown(){
+        if (timeLeft === -1){
+            clearTimeout(timerId);
+            location.reload();
+        } else if (isExperimentInstanceActive){
+            let minutes = 0;
+            let seconds = 0;
+            if (timeLeft > 0){
+                minutes = Math.floor(timeLeft / 60);
+                seconds = timeLeft % 60;
+            }
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            $('#experiments-textchat-header-timer').html(`Time left: ${minutes}:${seconds}`);
+            if ($('.experiments-textchat-chat-messages-message ')[0]) timeLeft--;
+        }
+    }
 
     function scrollBottomMessages(){
         // Scroll to bottom of messages list, to reveal newest messages
@@ -88,7 +109,7 @@ $(document).ready(function(){
         // Use the lock reason to determine text to display to user
         let textToDisplay = 'Please wait...'
         if (lockReason == 'receiving_message') textToDisplay = 'Waiting for a message to be received...';
-        else if (lockReason == 'determining_host') textToDisplay = 'Waiting for host to join (this may take a few minutes) ...';
+        else if (lockReason == 'determining_responder') textToDisplay = 'Waiting for responder to join (this may take a few minutes) ...';
         // Disable the user input and hide the send button
         textInput.prop('disabled', true).prop('placeholder', textToDisplay);
         $('#experiments-textchat-chat-userinput button').hide();
@@ -107,8 +128,8 @@ $(document).ready(function(){
     }
 
     function waitingForResponse(){
-        // Add an animated icon to the chat to indicate that the user is waiting on a response
         let waitingId = 'experiments-textchat-chat-messages-waiting';
+        // Add an animated icon to the chat to indicate that the user is waiting on a response
         if (isExperimentInstanceActive && getLatestMessage() && getLatestMessage().hasClass('sender') && $(`#${waitingId}`).length == 0){
             chatMessages.append(`<div id="${waitingId}"><span></span><span></span><span></span></div>`);
         }
@@ -120,8 +141,8 @@ $(document).ready(function(){
         if (!$(`.experiments-textchat-chat-messages-message[data-id=${message.id}]`).length){
             // Determine sender/receiver class of this message
             let senderOrReceiver = message.sender_or_receiver;
-            if (userRoleInExperimentInstance == 'no_role' && isUserAdmin){
-                senderOrReceiver = (message.is_sender_participant ? 'sender' : 'receiver')
+            if (userRoleInExperimentInstance == 'no_position' && isUserAdmin){
+                senderOrReceiver = (message.is_sender_originator ? 'sender' : 'receiver')
             }
             // Append new messages HTML to existing messages
             chatMessages.append(
@@ -130,6 +151,7 @@ $(document).ready(function(){
                     <div class="message-time" title="${message.datetime}">${message.time}</div>
                 </div>`
             );
+            scrollBottomMessages();
         }
     }
 
@@ -150,30 +172,33 @@ $(document).ready(function(){
         }
         // Make the AJAX GET request to get messages and display to user
         $.get(url, function(data){
+            // Update timer
+            if (data.timer) timeLeft = data.timer;
+
             // Add messages to chat
             if (data.messages.length){
                 data.messages.forEach(function(message){ appendMessageToChat(message) });
                 waitingForResponse();
             }
 
-            // Set global vars about the host
-            isHostDetermined = data.is_host_determined;
-            isHostAI = data.is_host_ai;
+            // Set global vars about the responder
+            isResponderDetermined = data.is_responder_determined;
+            isResponderAI = data.is_responder_ai;
 
             // Lock/unlock user input
-            // Lock if host has not yet been determined
-            if (!isHostDetermined) userInputLock('determining_host');
+            // Lock if responder has not yet been determined
+            if (!isResponderDetermined) userInputLock('determining_responder');
             // Lock if user's message is the most recent and waiting to receive message
             else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
-            // Lock if user is admin and host and no messages received, as participant must go first
-            else if (isUserAdmin && userRoleInExperimentInstance == 'host' && !getLatestMessage()) userInputLock('receiving_message');
+            // Lock if user is admin and responder and no messages received, as originator must go first
+            else if (isUserAdmin && userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
             // Unlock
             else userInputUnlock();
 
             // Show the information panel to participants on page load if chat is empty
             if (
                 data.messages.length == 0
-                && userRoleInExperimentInstance === 'participant'
+                && !isUserAdmin
                 && !latestMessage
                 && !isInformationAlreadyShown 
                 && isExperimentInstanceActive 
@@ -208,16 +233,19 @@ $(document).ready(function(){
             }
             // Make the AJAX POST request to create a new message
             $.post(url, postData, function(data){
-                // Refresh page if experiment instance is no longer active
-                if (data.experiment_instance_active == false){
-                    location.reload();
-                }
                 // If experiment instance is active
-                else {
+                if (data.experiment_instance_active){
+                    // Simulate waiting for a human to start replying
                     appendMessageToChat(data.message);
                     textInput.val('');
-                    if (isHostAI) postMessageAI();
-                    waitingForResponse();
+                    setTimeout(() => {
+                        if (isResponderAI) postMessageAI();
+                        waitingForResponse();
+                    }, (Math.random() * 5000) + 5000);
+                }
+                // Refresh page if experiment instance is no longer active
+                else {
+                    location.reload();
                 }
             }).fail(function(){
                 alert("Unable to post new messages. Please try refreshing the page and sending the message again or contact us if the problem persists.");
@@ -225,25 +253,25 @@ $(document).ready(function(){
         }
     }
 
-    function postSetHost(host_type){
-        let url = 'sethost/';
+    function postSetResponder(responder_type){
+        let url = 'setresponder/';
         let postData = {
             'csrfmiddlewaretoken': '{{ csrf_token }}',
-            'host_type': host_type
+            'responder_type': responder_type
         }
         // Make the AJAX POST request to create a new message
         $.post(url, postData, function(data){
-            // Refresh page if host set successfully
+            // Refresh page if responder set successfully
             if (data.success == true) location.reload();
-            else alert("Unable to set the host. It may be that the host has already been set by another user. Please try refreshing the page.");
+            else alert("Unable to set the responder. It may be that the responder has already been set by another user. Please try refreshing the page.");
         }).fail(function(){
-            alert("Unable to set the host. Please try refreshing the page or contact us if the problem persists.");
+            alert("Unable to set the responder. Please try refreshing the page or contact us if the problem persists.");
         });
     }
 
-    // User clicks a button to set the host
-    $('.experiments-textchat-chat-alert button.sethost').on('click', function(){
-        postSetHost($(this).attr('data-host'));
+    // User clicks a button to set the responder
+    $('.experiments-textchat-chat-alert button.setresponder').on('click', function(){
+        postSetResponder($(this).attr('data-responder'));
     });
 
     // User clicks the input submit button
@@ -270,16 +298,16 @@ $(document).ready(function(){
     });
 
     // User clicks to end experiment (after confirmation)
-    $('#experiments-textchat-header-actions-endexperiment').on('click', function(){
-        if (confirm("Have you finished the experiment?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue.")){
+    $('#experiments-textchat-chat-endexperiment').on('click', function(){
+        if (confirm("Have you finished the experiment and wish to complete the survey?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue the experiment.")){
             window.location.href = "{% url 'experiments:experimentinstance-completed' pk=experiment_instance.id %}";
         }
     });
 
     // Get all messages on page load
     getMessages();
-    // Get new messages every 10 seconds
-    setInterval(function(){ getMessages(); }, 10000);
+    // Get new messages every 10 seconds when experiment is active
+    if (isExperimentInstanceActive) setInterval(function(){ getMessages(); }, 10000);
 
 });
 </script>

@@ -9,8 +9,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(redirect_authenticated_user=True), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     # Account
-    path('', views.AccountUpdateView.as_view(), name='account'),
-    path('success/', views.AccountUpdateSuccessTemplateView.as_view(), name='account-success'),
+    path('', views.AccountTemplateView.as_view(), name='account'),
     # Create account
     path('create/', views.UserCreateView.as_view(), name='create'),
     path('create/success/', views.UserCreateSuccessTemplateView.as_view(), name='create-success'),

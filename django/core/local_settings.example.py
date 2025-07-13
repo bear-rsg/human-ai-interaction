@@ -41,17 +41,16 @@ DATABASES = {
 }
 
 # Experiment related settings
-# Keys used to access 3rd party AIs via their APIs
-EXPERIMENTS_AI_API_KEYS = {
-    'OPENAI': 'insertkeyhere',
-    'GOOGLE': 'insertkeyhere'
-}
-# How many minutes since creation or a latest message should an experiment instance be active
-EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES = 30
+# How many minutes since the first message should an experiment instance be made inactive
+EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE = 3
+# How many minutes since the experiment instance was created (with no messages) should it be made inactive
+EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_SINCE_CREATED = 30
 # The maxmimum number of active experiment instances at any given time
 EXPERIMENT_INSTANCES_ACTIVE_MAX = 1
-# How many minutes to allow an admin to manually determine the host of an experiment (admin or AI)
-WAIT_FOR_HOST_TO_BE_DETERMINED_MINUTES = 3
+# How many minutes to allow an admin to manually determine the responder of an experiment (admin or AI)
+WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES = 3
+# The probability of an I becoming the Responder in an ExperimentInstance (instead of a user)
+PROBABILITY_RESPONDER_IS_AI = 0.5
 
 # Email
 # Provide the email address for the site admin (e.g. the researcher/research team)
