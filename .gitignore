@@ -9,6 +9,7 @@ django/static/
 node_modules/
 django/general/migrations/
 .psd
+django/account/migrations/initial_users/initial_users.py
 
 
 ###################### Django Templated gitignore paths  ######################

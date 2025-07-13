@@ -14,17 +14,16 @@ from django.contrib.auth.hashers import make_password
 # Example users - replace with actual users (or leave as an empty list if not needed)
 INITIAL_USERS = [
     {
+        "username": "joe.bloggs@uni.ac.uk",
+        "password": make_password('examplepassword'),
+        "role": "admin",
+
         "first_name": "Joe",
         "last_name": "Bloggs",
-        "email": "joe.bloggs@uni.ac.uk",
-        "role": "admin",
-        "password": make_password('examplepassword')
     },
     {
-        "first_name": "Jane",
-        "last_name": "Bloggs",
-        "email": "jane.bloggs@uni.ac.uk",
+        "username": "exampleparticipant",
+        "password": make_password('examplepassword'),
         "role": "participant",
-        "password": make_password('examplepassword')
     },
 ]
