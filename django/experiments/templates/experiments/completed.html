@@ -8,9 +8,6 @@
     <p>
         Thank you for completing the <strong>{{ experiment_instance.experiment.name }}</strong> experiment. Please complete the below survey.
     </p>
-    <p>
-        <em>(If the survey isn't displaying, please try <a href="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}">opening it directly</a>)</em>
-    </p>
 
     <iframe id="experiments-completed-survey" src="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}"></iframe>
 

@@ -217,8 +217,14 @@ $(document).ready(function(){
         // Make the AJAX POST request to request the AI creates a new message
         $.post(url, postData, function(data){
             // Ignore, as data is retrieved automatically via getMessages()
-        }).fail(function(){
+        }).fail(function(jqXHR, textStatus, errorThrown){
+            // Show popup alert for user
             alert("There's been an error with the experiment. Please report this to the project team.");
+            // Log error details to console for dev
+            console.error("Request failed: " + textStatus);
+            console.error("Error thrown: " + errorThrown);
+            console.error("Status code: " + jqXHR.status);
+            console.error("Response text: " + jqXHR.responseText);
         });
     }
 
