@@ -15,6 +15,7 @@ def duplicate_experiments(modeladmin, request, queryset):
         models.Experiment.objects.create(
             name=f'{experiment.name} (copy)',
             modality=experiment.modality,
+            responder_type=experiment.responder_type,
             description=experiment.description,
             instructions=experiment.instructions,
             ai_model=experiment.ai_model,

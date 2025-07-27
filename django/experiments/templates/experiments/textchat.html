@@ -209,7 +209,6 @@ $(document).ready(function(){
                     appendMessageToChat(data.message);
                     textInput.val('');
                     delay = Number('{{ wait_to_request_response_seconds }}');
-                    console.log(delay)
                     setTimeout(() => {
                         if (isResponderAI) postMessageAI();
                         waitingForResponse();
