@@ -73,8 +73,8 @@ AUTH_USER_MODEL = 'account.User'
 # Redirects for login and logout
 
 LOGIN_URL = '/account/login/'
-LOGIN_REDIRECT_URL = '/account/'
-LOGOUT_REDIRECT_URL = '/account/login/'
+LOGIN_REDIRECT_URL = '/experiments/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 # Password validation

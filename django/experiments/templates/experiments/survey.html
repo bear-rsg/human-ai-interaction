@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+{% block main %}
+
+<div class="container">
+    <iframe id="experiments-survey" src="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}"></iframe>
+</div>
+
+{% endblock %}

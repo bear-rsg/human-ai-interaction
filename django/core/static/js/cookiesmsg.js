@@ -30,9 +30,9 @@ if (getCookie('cookieMessageApprove') !== '1') {
 
     // Generate HTML message
     var html_to_inject = '\
-<div id="cookie-message-popup" style="text-align: center; z-index: 1000; background: black; width: 96vw; padding: 1em; color: white; position: fixed; bottom: 2vw; right: 2vw;">\
-<i class="fas fa-cookie-bite"></i> This website uses cookies. By using this website, you accept our use of cookies. See our <a href="/cookies/" style="color: white; text-decoration: underline;">cookies policy</a> for more information.\
-<button id="cookie-message-popup-accept" style="display: inline-block; background: white; color: black; padding: 0.4em 1.7em; margin-left: 1em; cursor: pointer; vertical-align: middle;">Accept</button>\
+<div id="cookie-message-popup" style="text-align: center; z-index: 1000; background: white; width: 80vw; padding: 1em; color: black; position: fixed; bottom: 2vw; right: 10vw;">\
+<i class="fas fa-cookie-bite"></i> This website uses cookies. By using this website, you accept our use of cookies. See our <a href="/cookies/" style="font-weight: bold; color: black; text-decoration: underline;">cookies policy</a> for more information.\
+<button id="cookie-message-popup-accept" style="display: inline-block; background: black; color: white; padding: 0.4em 1.7em; margin-left: 1em; cursor: pointer; vertical-align: middle; border: none;">Accept</button>\
 </div>';
 
     // Add the HTML message to the page

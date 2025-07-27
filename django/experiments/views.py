@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotExist
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
-from django.core.mail import send_mail
 from django.conf import settings
 from openai import OpenAI
 from google import genai
@@ -40,11 +39,11 @@ except Exception:
     pass  # expected to fail sometimes, e.g. if AiModelProvider model not yet added to db
 
 
-def delay_ai_response(response_text):
+def delay_ai_response(experiment_instance, response_text):
     """
     Wait for a suitable length to mimic how long it could take a human to type the response text
     """
-    if response_text:
+    if response_text and not experiment_instance.is_responder_type_ai:
         # Average human types 3-4 chars per second (source: Google Gemini)
         delay_seconds = len(response_text) / 4
         if settings.DEBUG:
@@ -264,35 +263,6 @@ def experiment_instance_create_or_join(request):
     (or back to the experiment index page if the object can't be created)
     """
 
-    # The experiment_instance will be either the joined or newly created ExperimentInstance object
-    create_experiment_instance = True
-
-    # If there are existing active experiments, consider joining 
-    experiment_instances_active_all = get_experiment_instances_active_all(get_experiment_instances_all())
-    if experiment_instances_active_all:
-
-        # If there are any existing ExperimentInstance objects without a Responder
-        # either set current user or AI as the Responder
-        experiment_instances_active_awaitingresponder = [e for e in experiment_instances_active_all if not e.is_responder_determined]
-        if len(experiment_instances_active_awaitingresponder):
-            experiment_instance = experiment_instances_active_awaitingresponder[0]
-            # Randomly decides if Responder should be user or AI
-            if random.random() >= settings.PROBABILITY_RESPONDER_IS_AI:
-                experiment_instance.responder = request.user
-                experiment_instance.is_responder_ai = False
-                # User has joined this experiment instance, so no need to create one
-                create_experiment_instance = False
-            else:
-                experiment_instance.is_responder_ai = True
-            experiment_instance.save()
-
-        # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
-        experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
-        experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
-        experiment_instances_warning_toomanyactive_currentuser = len(experiment_instances_active_currentuser)
-        if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser:
-            return redirect(reverse('experiments:index'))
-
     # Get an Experiment object using the experiment_id from the POST request
     try:
         experiment_id = int(request.POST.get('experiment_id', None))
@@ -304,24 +274,42 @@ def experiment_instance_create_or_join(request):
     except ObjectDoesNotExist:
         raise BadRequest('No matching Experiment object found for provided experiment_id')
 
+    # The experiment_instance will be either the joined or newly created ExperimentInstance object
+    create_experiment_instance = True
+
+    # If there are existing active experiments, consider joining one
+    experiment_instances_active_all = get_experiment_instances_active_all(get_experiment_instances_all())
+    if not experiment.is_responder_type_ai and experiment_instances_active_all:
+
+        # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
+        experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
+        experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
+        experiment_instances_warning_toomanyactive_currentuser = len(experiment_instances_active_currentuser)
+        if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser:
+            return redirect(reverse('experiments:index'))
+
+        # If there are any existing ExperimentInstance objects without a Responder
+        # either set current user or AI as the Responder
+        experiment_instances_active_awaitingresponder = [e for e in experiment_instances_active_all if not e.is_responder_determined]
+        if len(experiment_instances_active_awaitingresponder):
+            # Set the current user as the responder for the experiment instance
+            experiment_instance = experiment_instances_active_awaitingresponder[0]
+            experiment_instance.responder = request.user
+            experiment_instance.is_responder_ai = False
+            experiment_instance.save()
+            # User has joined this experiment instance, so no need to create one
+            create_experiment_instance = False
+
     # Create a new ExperimentInstance object (if one hasn't already been joined)
     if create_experiment_instance:
         experiment_instance = models.ExperimentInstance.objects.create(
             experiment=experiment,
             originator=request.user,
         )
-
-        # Email admins to alert them, so they can set a responder manually, if needed
-        try:
-            send_mail(
-                'Human-AI Interaction: New Experiment Instance Started',
-                f"A new experiment instance has started and requires a responder:\n\nUser: {request.user}\nExperiment: {experiment}\nLink: {request.build_absolute_uri(experiment_instance_url)}\n\nIf a responder hasn't been found after {settings.WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES} minutes, the AI responder will be automatically set.",
-                settings.DEFAULT_FROM_EMAIL,
-                settings.NOTIFICATION_EMAIL,
-                fail_silently=False
-            )
-        except Exception:
-            print("Failed to send email")
+        # Set responder to be AI if the experiment responder type is AI (or random and system decides)
+        if experiment.is_responder_type_ai or (experiment.is_responder_type_random and random.random() <= settings.PROBABILITY_RESPONDER_IS_AI):
+            experiment_instance.is_responder_ai = True
+            experiment_instance.save()
 
     # Redirect user to the detail view of the created/joined ExperimentInstance
     return redirect(reverse('experiments:experimentinstance-detail', kwargs={'pk': experiment_instance.id}))
@@ -339,7 +327,8 @@ def experiment_instance_detail(request, pk):
         'experiment_instance': experiment_instance,
         'is_experiment_instance_active': experiment_instance.is_active,
         'is_experiment_instance_responder_determined': experiment_instance.is_responder_determined,
-        'user_position_in_experiment_instance': experiment_instance.user_position_in_experiment_instance(request.user)
+        'user_position_in_experiment_instance': experiment_instance.user_position_in_experiment_instance(request.user),
+        'wait_to_request_response_seconds': experiment_instance.wait_to_request_response_seconds
     }
     return render(request, 'experiments/textchat.html', context)
 
@@ -365,10 +354,10 @@ def experiment_instance_setresponder(request, pk):
 
 
 @login_required
-def experiment_instance_completed(request, pk):
+def experiment_instance_survey(request, pk):
     """
     Functional view that marks the ExperimentInstance as completed and
-    returns a suitable template with required data
+    returns a template that includes the experiment survey
     """
 
     # Mark experiment as ended by user
@@ -377,7 +366,7 @@ def experiment_instance_completed(request, pk):
     experiment_instance.save()
     # Return user to template
     context = {'experiment_instance': experiment_instance}
-    return render(request, 'experiments/completed.html', context)
+    return render(request, 'experiments/survey.html', context)
 
 
 @login_required
@@ -465,7 +454,7 @@ def experiment_instance_message_new_ai(request, pk):
 
     # Create a new ExperimentInstanceMessage object with the response text
     success = False
-    delay_ai_response(response_text)
+    delay_ai_response(experiment_instance, response_text)
     if response_text:
         models.ExperimentInstanceMessage.objects.create(
             experiment_instance=experiment_instance,

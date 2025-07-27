@@ -50,10 +50,6 @@
 
     /* ---------- Experiments ---------- */
 
-    .experiments-index-instance-create-list-item {
-        width: calc(100% - 1.8em);
-    }
-
     #experiments-index-instance-history-header-search {
         display: block;
         margin-bottom: 1em;

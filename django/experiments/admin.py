@@ -85,12 +85,13 @@ class ExperimentAdminView(admin.ModelAdmin):
                     'name',
                     'description',
                     'modality',
+                    'responder_type',
                     'ai_model',
                     'is_published',
                     'datetime_created',
                     'datetime_updated')
     list_select_related = ('modality',)
-    list_filter = ('modality', 'is_published')
+    list_filter = ('modality', 'responder_type', 'is_published')
     search_fields = ('name', 'description', 'instructions', 'admin_notes')
     readonly_fields = ('datetime_created', 'datetime_updated')
     actions = (duplicate_experiments,)

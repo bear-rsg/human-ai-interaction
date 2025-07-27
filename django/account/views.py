@@ -1,8 +1,8 @@
-from django.views.generic import (TemplateView, CreateView, UpdateView)
+from django.views.generic import (TemplateView, CreateView)
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import login
 from django.contrib.auth.views import (PasswordChangeView, PasswordResetView, PasswordResetConfirmView)
-from account import (forms, models)
+from account import forms
 
 
 class AccountTemplateView(TemplateView):
@@ -20,7 +20,14 @@ class UserCreateView(CreateView):
 
     template_name = 'account/create.html'
     form_class = forms.PublicUserCreationForm
-    success_url = reverse_lazy('account:create-success')
+    success_url = reverse_lazy('experiments:index')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Log the user in (self.object is the user object that was created)
+        if not self.request.user.is_authenticated:
+            login(self.request, self.object)
+        return response
 
 
 class UserCreateSuccessTemplateView(TemplateView):

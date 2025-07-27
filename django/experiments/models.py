@@ -79,6 +79,27 @@ class Modality(models.Model):
         ordering = ('name', 'id')
 
 
+class ResponderType(models.Model):
+    """
+    The type of responder used by default for an experiment. E.g. AI, Human, system decides randomly
+    """
+
+    related_name = 'respondertypes'
+
+    name = models.CharField(max_length=200)
+
+    datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
+    datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
+
+    admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name', 'id')
+
+
 class Experiment(models.Model):
     """
     A type of activity that users complete, with a clearly defined set of instructions to follow
@@ -88,6 +109,12 @@ class Experiment(models.Model):
 
     name = models.CharField(max_length=255)
     modality = models.ForeignKey(Modality, related_name=related_name, on_delete=models.PROTECT)
+    responder_type = models.ForeignKey(
+        ResponderType,
+        related_name=related_name,
+        on_delete=models.PROTECT,
+        help_text='Whether the responder in this experiment will always be AI, always be human, or system randomly decides'
+    )
     description = models.TextField(
         blank=True, null=True,
         help_text="A brief description of this experiment aimed at participants"
@@ -108,6 +135,16 @@ class Experiment(models.Model):
     datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
 
     admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
+
+    @property
+    def is_responder_type_ai(self):
+        """ Return True if the responder type of this experiment is always AI else return False"""
+        return self.responder_type and self.responder_type.name == 'AI'
+
+    @property
+    def is_responder_type_random(self):
+        """ Return True if the responder type of this experiment is random else return False"""
+        return self.responder_type and self.responder_type.name == 'Random (Human or AI)'
 
     @property
     def description_brief(self):
@@ -148,13 +185,17 @@ class ExperimentInstance(models.Model):
             return 'no_position'
 
     @property
+    def is_responder_type_ai(self):
+        """ Return True if the responder type of this experiment is always AI else return False"""
+        return self.experiment.is_responder_type_ai
+
+    @property
     def is_responder_determined(self):
         """ Return True if the responder has been determined (as a user or AI) else return False """
         return True if self.is_responder_ai or self.responder else False
 
     @property
     def is_wait_for_responder_to_be_determined_expired(self):
-        """ Return True if the time allowed for admin to choose a responder has expired and so now responder must be AI """
         return not self.is_responder_determined and self.datetime_created <= now() - datetime.timedelta(minutes=settings.WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES)
 
     @property
@@ -165,6 +206,11 @@ class ExperimentInstance(models.Model):
             return self.responder.name
         elif not self.is_responder_determined:
             return '-'
+
+    @property
+    def wait_to_request_response_seconds(self):
+        """ How long to delay on the client when waiting for response, to simulate waiting for a reply """
+        return 0 if self.is_responder_type_ai else settings.WAIT_TO_REQUEST_RESPONSE_SECONDS * 1000
 
     @property
     def is_active(self):
@@ -208,7 +254,6 @@ class ExperimentInstance(models.Model):
             )
         else:
             return timer_in_seconds
-
 
     def get_absolute_url(self):
         return reverse('experiments:experimentinstance-detail', kwargs={'pk': str(self.id)})

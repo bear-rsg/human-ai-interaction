@@ -10,7 +10,7 @@
                     {% if user.is_admin %}<th>Originator</th>{% endif %}
                     {% if user.is_admin %}<th>Responder</th>{% endif %}
                     <th>Status</th>
-                    <th>Export Data</th>
+                    {% if user.is_admin %}<th>Export Data</th>{% endif %}
                     <th>View Experiment</th>
                 </tr>
             </thead>
@@ -23,7 +23,7 @@
                     {% if user.is_admin %}<td>{{ experiment_instance.originator }}</td>{% endif %}
                     {% if user.is_admin %}<td>{{ experiment_instance.responder_name }}</td>{% endif %}
                     <td>{{ experiment_instance.is_active_html | safe }}</td>
-                    <td><a href="{% url 'experiments:experimentinstance-exportdata' %}?experiment_instance_id={{ experiment_instance.id }}">Export <i class="fa-solid fa-file-arrow-down"></i></a></td>
+                    {% if user.is_admin %}<td><a href="{% url 'experiments:experimentinstance-exportdata' %}?experiment_instance_id={{ experiment_instance.id }}">Export <i class="fa-solid fa-file-arrow-down"></i></a></td>{% endif %}
                     <td><a href="{% url 'experiments:experimentinstance-detail' pk=experiment_instance.id %}">View <i class="fa-solid fa-square-arrow-up-right"></i></a></td>
                 </tr>
             {% endfor %}

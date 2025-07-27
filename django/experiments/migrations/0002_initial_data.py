@@ -23,6 +23,16 @@ def insert_modalities(apps, schema_editor):
     ]:
         models.Modality.objects.create(**obj)
 
+
+def insert_responder_type(apps, schema_editor):
+    """
+    Inserts ResponderType objects
+    """
+
+    for name in ['AI', 'Human', 'Random (Human or AI)']:
+        models.ResponderType.objects.create(name=name)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -31,4 +41,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(insert_modalities),
+        migrations.RunPython(insert_responder_type),
     ]

@@ -7,33 +7,15 @@
         <div id="experiments-textchat-header-title">
             {{ experiment_instance.experiment.name }}
         </div>
-        <div id="experiments-textchat-header-timer"></div>
         <div id="experiments-textchat-header-actions">
             {% if user.is_admin %}
                 <span id="experiments-textchat-header-actions-adminview">
                     <a href="{% url 'admin:experiments_experimentinstance_change' experiment_instance.id %}" target="_blank" title="View in admin dashboard"><i class="fa-solid fa-gear"></i></a>
                 </span>
             {% endif %}
-            {% if is_experiment_instance_active %}
-                <span id="experiments-textchat-header-actions-informationlink" title="Show information">
-                    <i class="fa-solid fa-circle-info"></i>
-                </span>
-            {% endif %}
         </div>
+        <div id="experiments-textchat-header-timer"></div>
     </div>
-    {% if is_experiment_instance_active %}
-    <div id="experiments-textchat-information">
-        <div id="experiments-textchat-information-description">
-            <h3>About Experiment</h3>
-            {{ experiment_instance.experiment.description }}
-        </div>
-        <div id="experiments-textchat-information-instructions">
-            <h3>Instructions</h3>
-            {{ experiment_instance.experiment.instructions | safe }}
-        </div>
-        <button id="experiments-textchat-information-startexperiment"><i class="fa-solid fa-circle-check"></i> Start Experiment</button>
-    </div>
-    {% endif %}
     <div id="experiments-textchat-chat">
         <div id="experiments-textchat-chat-messages"></div>
         <!-- Below the messages, show the appropriate content (e.g. user input, responder select, or alert) -->
@@ -61,7 +43,7 @@
         {% endif %}
 
         {% if user == experiment_instance.originator or user == experiment_instance.responder %}
-            <div id="experiments-textchat-chat-endexperiment">
+            <div id="experiments-textchat-chat-endchat">
                 End chat and proceed to survey <i class="fa-solid fa-circle-arrow-right"></i>
             </div>
         {% endif %}
@@ -77,7 +59,6 @@ $(document).ready(function(){
     var isUserAdmin = '{{ user.is_admin }}' == 'True';
     var isResponderDetermined = false;
     var isResponderAI = false;
-    var isInformationAlreadyShown  = false;
     var textInput = $('#experiments-textchat-chat-userinput textarea');
     var chatMessages = $('#experiments-textchat-chat-messages');
     var timeLeft;
@@ -120,11 +101,6 @@ $(document).ready(function(){
         textInput.prop('disabled', false).prop('placeholder', 'Type your message...').focus();
         $('#experiments-textchat-chat-userinput button').show();
         $('#experiments-textchat-chat-messages-waiting').remove();
-    }
-
-    function toggleChatAndInformation(){
-        // Switch between viewing the chat and viewing the information
-        $('#experiments-textchat-chat, #experiments-textchat-information').toggle();
     }
 
     function waitingForResponse(){
@@ -190,22 +166,10 @@ $(document).ready(function(){
             if (!isResponderDetermined) userInputLock('determining_responder');
             // Lock if user's message is the most recent and waiting to receive message
             else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
-            // Lock if user is admin and responder and no messages received, as originator must go first
-            else if (isUserAdmin && userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
+            // Lock if user is responder and no messages received, as originator must go first
+            else if (userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
             // Unlock
             else userInputUnlock();
-
-            // Show the information panel to participants on page load if chat is empty
-            if (
-                data.messages.length == 0
-                && !isUserAdmin
-                && !latestMessage
-                && !isInformationAlreadyShown 
-                && isExperimentInstanceActive 
-            ){
-                toggleChatAndInformation();
-                isInformationAlreadyShown  = true;
-            }
         }).fail(function(){
             alert("Unable to load messages. Please try refreshing the page or contact us if the problem persists.");
         });
@@ -244,10 +208,12 @@ $(document).ready(function(){
                     // Simulate waiting for a human to start replying
                     appendMessageToChat(data.message);
                     textInput.val('');
+                    delay = Number('{{ wait_to_request_response_seconds }}');
+                    console.log(delay)
                     setTimeout(() => {
                         if (isResponderAI) postMessageAI();
                         waitingForResponse();
-                    }, (Math.random() * 5000) + 5000);
+                    }, (Math.random() * delay) + delay);
                 }
                 // Refresh page if experiment instance is no longer active
                 else {
@@ -293,20 +259,10 @@ $(document).ready(function(){
         }
     });
 
-    // User clicks information button to show information and hide chat
-    $('#experiments-textchat-header-actions-informationlink').on('click', function(){
-        toggleChatAndInformation();
-    });
-
-    // User clicks 'start experiment' button
-    $('#experiments-textchat-information-startexperiment').on('click', function(){
-        toggleChatAndInformation();
-    });
-
-    // User clicks to end experiment (after confirmation)
-    $('#experiments-textchat-chat-endexperiment').on('click', function(){
-        if (confirm("Have you finished the experiment and wish to complete the survey?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue the experiment.")){
-            window.location.href = "{% url 'experiments:experimentinstance-completed' pk=experiment_instance.id %}";
+    // User clicks to end chat (after confirmation)
+    $('#experiments-textchat-chat-endchat').on('click', function(){
+        if (confirm("Have you finished the chat and wish to complete the survey?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue the chat.")){
+            window.location.href = "{% url 'experiments:experimentinstance-survey' pk=experiment_instance.id %}";
         }
     });
 

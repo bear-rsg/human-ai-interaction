@@ -43,11 +43,6 @@
 
     /* ---------- Experiments ---------- */
 
-    .experiments-index-instance-create-list-item {
-        width: 21em;
-        max-width: 80%;
-    }
-
     #experiments-index-instance-history-header-search input {
         width: 27em;
     }

@@ -26,63 +26,72 @@
                         {{ experiment.name }}
                     </div>
                     <div class="experiments-index-instance-create-list-item-description">
-                        {{ experiment.description_brief }}
+                        {{ experiment.description }}
                     </div>
-                    <div class="experiments-index-instance-create-list-item-modality">
-                        {{ experiment.modality.icon | safe }} {{ experiment.modality.name | title }} 
+                    <div class="experiments-index-instance-create-list-item-instructions">
+                        <div class="experiments-index-instance-create-list-item-instructions-title">
+                            Instructions:
+                        </div>
+                        <div class="experiments-index-instance-create-list-item-instructions-content">
+                            {{ experiment.instructions | safe }}
+                        </div>
                     </div>
                     {% if not experiment_instances_warning_toomanyactive_allusers and not experiment_instances_warning_toomanyactive_currentuser %}
                         <form action="{% url 'experiments:experimentinstance-createorjoin' %}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="experiment_id" value="{{ experiment.id }}">
                             <button class="experiments-index-instance-create-list-item-start" type="submit">
-                                <i class="fa-solid fa-play"></i> Start
+                                <i class="fa-solid fa-play"></i> Start Experiment
                             </button>
                         </form>
                     {% endif %}
                 </li>
+            {% empty %}
+                <em>No experiments are currently available to start. Please check back soon.</em>
             {% endfor %}
         </ul>
     </div>
 
-    {% if user.is_admin %}
+    {% if user.is_admin and experiment_instances_active_responder_none %}
         <div id="experiments-index-instance-responder-none">
             <h2>Active Experiments Waiting for a Responder</h2>
             {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-data' data=experiment_instances_active_responder_none %}
         </div>
     {% endif %}
 
-    <div id="experiments-index-instance-history">
-        <h2>Experiments History</h2>
-        {% if user.is_admin %}
-            <div id="experiments-index-instance-history-header">
-                    <!-- Search -->
-                    <div id="experiments-index-instance-history-header-search">
-                        <input type="text" name="search" placeholder="Search" title="search"><!--
-                        --><button type="submit" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+    {% if experiment_instances_history %}
+        <div id="experiments-index-instance-history">
+            <h2>Experiments</h2>
+            {% if user.is_admin %}
+                <div id="experiments-index-instance-history-header">
+                        <!-- Search -->
+                        <div id="experiments-index-instance-history-header-search">
+                            <input type="text" name="search" placeholder="Search" title="search"><!--
+                            --><button type="submit" title="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
+                        <!-- Show results -->
+                        <select name="show" id="experiments-index-instance-history-header-show" title="Number of results to show">
+                            <option value="25">Show 25 results</option>
+                            <option value="50">Show 50 results</option>
+                            <option value="100">Show 100 results</option>
+                            <option value="all">Show all results</option>
+                        </select>
+                    </form>
+                    <div id="experiments-index-instance-history-header-showingcounts">
+                        {% if experiment_instances_history_count != experiment_instances_history_countall %}
+                            Showing {{ experiment_instances_history_count }} of {{ experiment_instances_history_countall }} total results
+                        {% else %}
+                            Showing all {{ experiment_instances_history_count }} results
+                        {% endif %}
                     </div>
-                    <!-- Show results -->
-                    <select name="show" id="experiments-index-instance-history-header-show" title="Number of results to show">
-                        <option value="25">Show 25 results</option>
-                        <option value="50">Show 50 results</option>
-                        <option value="100">Show 100 results</option>
-                        <option value="all">Show all results</option>
-                    </select>
-                </form>
-                <div id="experiments-index-instance-history-header-showingcounts">
-                    {% if experiment_instances_history_count != experiment_instances_history_countall %}
-                        Showing {{ experiment_instances_history_count }} of {{ experiment_instances_history_countall }} total results
-                    {% else %}
-                        Showing all {{ experiment_instances_history_count }} results
-                    {% endif %}
+                    <div id="experiments-index-instance-history-header-exportdata">
+                        <a href="{% url 'experiments:experimentinstance-exportdata' %}">Export All Data <i class="fa-solid fa-file-arrow-down"></i></a>
+                    </div>
                 </div>
-                <div id="experiments-index-instance-history-header-exportdata">
-                    <a href="{% url 'experiments:experimentinstance-exportdata' %}">Export All Data <i class="fa-solid fa-file-arrow-down"></i></a>
-                </div>
-            </div>
-        {% endif %}
-        {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-data' data=experiment_instances_history %}
-    </div>
+            {% endif %}
+            {% include 'experiments/snippets/experiment-instances-table.html' with table_id='experiments-index-instance-history-data' data=experiment_instances_history %}
+        </div>
+    {% endif %}
 </div>
 
 

@@ -515,29 +515,22 @@ main section {
 }
 
 .experiments-index-instance-create-list-item {
+    width: calc(100% - 2em);
     list-style: none;
-    margin: 0.9em;
+    margin: 1em 1em 3em 1em;
     background: #202020;
     border-radius: 0.8em;
-    padding: 1em;
+    padding: 1em 1em 5em 1em;
     display: inline-block;
     position: relative;
-    height: 15em;
     user-select: none;
-    overflow: hidden;
 }
 
 .experiments-index-instance-create-list-item-title {
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1.5em;
     margin-bottom: 0.5em;
     line-height: 1em;
-}
-
-.experiments-index-instance-create-list-item-modality {
-    font-size: 0.9em;
-    color: var(--color-primary);
-    margin: 0.3em 0;
 }
 
 .experiments-index-instance-create-list-item-description {
@@ -546,14 +539,25 @@ main section {
     margin-bottom: 1em;
 }
 
+.experiments-index-instance-create-list-item-instructions-title {
+    font-size: 1.05em;
+    font-weight: 500;
+    padding: 1em 0 0.5em 0;
+}
+
+.experiments-index-instance-create-list-item-instructions-content {
+    font-size: 0.9em;
+}
+
 .experiments-index-instance-create-list-item-start {
     position: absolute;
     bottom: 1em;
-    right: 1em;
+    left: 5em;
+    width: calc(100% - 10em);
     background: var(--color-primary);
     color: black;
     border: none;
-    padding: 0.5em 0.8em;
+    padding: 0.8em;
     font-weight: 500;
     font-size: 1.1em;
 }
@@ -662,21 +666,15 @@ main section {
     font-weight: bold;
     font-size: 1.5em;
     display: inline-block;
-    width: calc(100% - 23.5rem);
-}
-
-#experiments-textchat-header-timer {
-    display: inline-block;
-    width: 12em;
-    text-align: center;
-    font-weight: bold;
+    width: calc(100% - 17rem);
 }
 
 #experiments-textchat-header-actions {
     display: inline-block;
     text-align: right;
     color: var(--color-primary);
-    width: 10rem;
+    width: 5em;
+    margin-right: 0.5em;
 }
 
 #experiments-textchat-header-actions span {
@@ -691,6 +689,13 @@ main section {
 
 #experiments-textchat-header-actions a {
     color: var(--color-primary);
+}
+
+#experiments-textchat-header-timer {
+    display: inline-block;
+    width: 10em;
+    text-align: right;
+    font-weight: bold;
 }
 
 #experiments-textchat-chat-messages {
@@ -830,23 +835,28 @@ main section {
     height: 40pt;
     border-radius: 0.4rem;
     margin-left: 2rem;
-}
-
-#experiments-textchat-chat-userinput button:hover {
     opacity: 0.8;
 }
 
-#experiments-textchat-chat-endexperiment {
-    color: var(--color-secondary-light);
-    text-align: center;
+#experiments-textchat-chat-userinput button:hover {
+    opacity: 1;
+}
+
+#experiments-textchat-chat-endchat {
+    background: var(--color-primary);
+    color: black;
+    width: fit-content;
+    padding: 0.3em 1em;
+    border-radius: 1em;
+    font-weight: 500;
+    float: right;
     cursor: pointer;
-    margin-top: 1.5em;
+    margin: 1.5em 0.5em 0 0;
     font-size: 0.95em;
     opacity: 0.8;
 }
 
-#experiments-textchat-chat-endexperiment:hover {
-    text-decoration: underline;
+#experiments-textchat-chat-endchat:hover {
     opacity: 1;
 }
 
@@ -872,11 +882,6 @@ main section {
     font-weight: 600;
 }
 
-#experiments-textchat-information {
-    display: none;
-}
-
-#experiments-textchat-information-startexperiment,
 .button-primary {
     font-size: 1.2em;
     font-weight: bold;
@@ -890,13 +895,10 @@ main section {
     margin: 3em auto;
 }
 
-#experiments-textchat-information-startexperiment:hover {
-    opacity: 0.8;
-}
-
 /* Completed */
 
-#experiments-completed-survey {
+#experiments-survey {
+    margin-top: 3em;
     width: 100%;
     height: 65vh;
 }
