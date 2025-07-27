@@ -9,7 +9,6 @@ from openai import OpenAI
 from google import genai
 from datetime import datetime
 from . import models
-import time
 import io
 import csv
 import random
@@ -37,18 +36,6 @@ try:
             ai_clients[ai_model_provider] = ai_client
 except Exception:
     pass  # expected to fail sometimes, e.g. if AiModelProvider model not yet added to db
-
-
-def delay_ai_response(experiment_instance, response_text):
-    """
-    Wait for a suitable length to mimic how long it could take a human to type the response text
-    """
-    if response_text and not experiment_instance.is_responder_type_ai:
-        # Average human types 3-4 chars per second (source: Google Gemini)
-        delay_seconds = len(response_text) / 4
-        if settings.DEBUG:
-            print(f'\nDelay AI response by: {delay_seconds} seconds\n')
-        time.sleep(delay_seconds)
 
 
 def get_ai_response_google(experiment_instance, ai_model):
@@ -174,7 +161,8 @@ def create_message_dict_for_client(message, user=None):
         'datetime': message.datetime_created_clean,
         'time': message.time_created_clean,
         'sender_or_receiver': message.sender_or_receiver(user),
-        'is_sender_originator': message.is_sender_originator
+        'is_sender_originator': message.is_sender_originator,
+        'is_sender_ai': message.is_sender_ai
     }
 
 
@@ -392,13 +380,22 @@ def experiment_instance_message_list(request, pk):
         messages = messages.filter(datetime_created__gt=latest_message.datetime_created)
     # Build a list of new messages, where each message is a dict containing only required data
     messages = [create_message_dict_for_client(m, request.user) for m in messages]
+
+    # Send a delay for the latest message to client to simulate human typing,
+    # if AI is sender (but user doesn't know if sender is AI or human)
+    delay_latest_message_seconds = 0
+    if not experiment_instance.is_responder_type_ai and messages and len(messages) == 1 and messages[0]['is_sender_ai']:
+        # Average human types 3-4 chars per second so divide chars by 4 (source: Google Gemini)
+        delay_latest_message_seconds = len(messages[0]['text']) / 4
+
     # Return data as JSON
     return JsonResponse(
         {
             'messages': messages,
             'is_responder_determined': experiment_instance.is_responder_determined,
             'is_responder_ai': experiment_instance.is_responder_ai,
-            'timer': experiment_instance.timer
+            'timer': experiment_instance.timer,
+            'delay_latest_message_seconds': delay_latest_message_seconds
         }, safe=False
     )
 
@@ -454,7 +451,6 @@ def experiment_instance_message_new_ai(request, pk):
 
     # Create a new ExperimentInstanceMessage object with the response text
     success = False
-    delay_ai_response(experiment_instance, response_text)
     if response_text:
         models.ExperimentInstanceMessage.objects.create(
             experiment_instance=experiment_instance,

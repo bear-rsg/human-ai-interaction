@@ -151,25 +151,29 @@ $(document).ready(function(){
             // Update timer
             if (data.timer) timeLeft = data.timer;
 
-            // Add messages to chat
-            if (data.messages.length){
-                data.messages.forEach(function(message){ appendMessageToChat(message) });
-                waitingForResponse();
-            }
-
             // Set global vars about the responder
             isResponderDetermined = data.is_responder_determined;
             isResponderAI = data.is_responder_ai;
 
-            // Lock/unlock user input
-            // Lock if responder has not yet been determined
-            if (!isResponderDetermined) userInputLock('determining_responder');
-            // Lock if user's message is the most recent and waiting to receive message
-            else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
-            // Lock if user is responder and no messages received, as originator must go first
-            else if (userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
-            // Unlock
-            else userInputUnlock();
+            // Set an artificial delay using the 'delay_latest_message_seconds' (see view for details)
+            // Only applies to AI responses if user doesn't know if speaking to AI or human
+            let artificialDelay = Number(data.delay_latest_message_seconds) * 1000;
+            setTimeout(() => {
+                // Add messages to chat
+                if (data.messages.length){
+                    data.messages.forEach(function(message){ appendMessageToChat(message) });
+                    waitingForResponse();
+                }
+                // Lock/unlock user input
+                // Lock if responder has not yet been determined
+                if (!isResponderDetermined) userInputLock('determining_responder');
+                // Lock if user's message is the most recent and waiting to receive message
+                else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
+                // Lock if user is responder and no messages received, as originator must go first
+                else if (userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
+                // Unlock
+                else userInputUnlock();
+            }, artificialDelay);
         }).fail(function(){
             alert("Unable to load messages. Please try refreshing the page or contact us if the problem persists.");
         });
