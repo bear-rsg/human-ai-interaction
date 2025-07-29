@@ -210,7 +210,10 @@ class ExperimentInstance(models.Model):
     @property
     def wait_to_request_response_seconds(self):
         """ How long to delay on the client when waiting for response, to simulate waiting for a reply """
-        return 0 if self.is_responder_type_ai else settings.WAIT_TO_REQUEST_RESPONSE_SECONDS * 1000
+        if settings.USE_ARTIFICIAL_DELAYS and not self.is_responder_type_ai:
+            return settings.WAIT_TO_REQUEST_RESPONSE_SECONDS * 1000
+        else:
+            return 0
 
     @property
     def is_active(self):

@@ -21,7 +21,7 @@
         <!-- Below the messages, show the appropriate content (e.g. user input, responder select, or alert) -->
         {% if not is_experiment_instance_active %}
             <div class="experiments-textchat-chat-alert">
-                This exercise is no longer active. You can review past messages but can't send new messages.
+                This chat is no longer active. You can review past messages but can't send new messages.
             </div>
         {% elif user.is_admin and user != experiment_instance.originator and not is_experiment_instance_responder_determined %}
             <div class="experiments-textchat-chat-alert">
@@ -47,6 +47,15 @@
                 End chat and proceed to survey <i class="fa-solid fa-circle-arrow-right"></i>
             </div>
         {% endif %}
+    </div>
+    <div id="experiments-textchat-lobby">
+        <div id="experiments-textchat-lobby-title">Lobby</div>
+        <span id="experiments-textchat-lobby-loader"></span>
+        <div id="experiments-textchat-lobby-text">
+            Please wait here whilst we match you to another participant...
+            <br>
+            (this may take a few minutes)
+        </div>
     </div>
 </div>
 
@@ -87,10 +96,12 @@ $(document).ready(function(){
     }
 
     function userInputLock(lockReason){
+        // Show the lobby
+        if (lockReason == 'determining_responder') $('#experiments-textchat-lobby').show();
         // Use the lock reason to determine text to display to user
         let textToDisplay = 'Please wait...'
-        if (lockReason == 'receiving_message') textToDisplay = 'Waiting for a message to be received...';
-        else if (lockReason == 'determining_responder') textToDisplay = 'Waiting for responder to join (this may take a few minutes) ...';
+        if (lockReason == 'receiving_message') textToDisplay = 'Waiting for the other participant to send a message ...';
+        else if (lockReason == 'determining_responder') textToDisplay = 'Waiting for the other participant to join the chat ...';
         // Disable the user input and hide the send button
         textInput.prop('disabled', true).prop('placeholder', textToDisplay);
         $('#experiments-textchat-chat-userinput button').hide();
@@ -101,6 +112,7 @@ $(document).ready(function(){
         textInput.prop('disabled', false).prop('placeholder', 'Type your message...').focus();
         $('#experiments-textchat-chat-userinput button').show();
         $('#experiments-textchat-chat-messages-waiting').remove();
+        $('#experiments-textchat-lobby').hide();
     }
 
     function waitingForResponse(){

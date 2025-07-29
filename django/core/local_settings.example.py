@@ -51,8 +51,10 @@ EXPERIMENT_INSTANCES_ACTIVE_MAX = 1
 WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES = 1
 # The probability of an I becoming the Responder in an ExperimentInstance (instead of a user)
 PROBABILITY_RESPONDER_IS_AI = 0.5
+# Whether or not to use artificial delays during AI chat experiments to imitate humans typing
+USE_ARTIFICIAL_DELAYS = False
 # How many seconds to wait before requesting response on client (simulates waiting for human to start typing)
-WAIT_TO_REQUEST_RESPONSE_SECONDS = 5
+WAIT_TO_REQUEST_RESPONSE_SECONDS = 3 if USE_ARTIFICIAL_DELAYS else 0
 
 # Email
 # Provide the email address for the site admin (e.g. the researcher/research team)

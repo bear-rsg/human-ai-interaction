@@ -218,6 +218,10 @@ def experiment_index(request):
         )
     experiment_instances_history = experiment_instances_history.distinct()  # avoids duplicates
 
+    # Participants can only see active instances
+    if request.user.is_participant:
+        experiment_instances_history = [e for e in experiment_instances_history if e.is_active]
+
     # Limit number of results to show
     show = request.GET.get('show', None)
     show_limit = None
@@ -234,7 +238,7 @@ def experiment_index(request):
         'experiment_instances_warning_toomanyactive_allusers': settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all),
         'experiment_instances_warning_toomanyactive_currentuser': len(experiment_instances_active_currentuser),
         'experiment_instances_history': experiment_instances_history,
-        'experiment_instances_history_count': experiment_instances_history.count(),
+        'experiment_instances_history_count': len(experiment_instances_history),
         'experiment_instances_history_countall': experiment_instances_history_countall
     })
     return render(request, 'experiments/index.html', context)
@@ -384,7 +388,7 @@ def experiment_instance_message_list(request, pk):
     # Send a delay for the latest message to client to simulate human typing,
     # if AI is sender (but user doesn't know if sender is AI or human)
     delay_latest_message_seconds = 0
-    if not experiment_instance.is_responder_type_ai and messages and len(messages) == 1 and messages[0]['is_sender_ai']:
+    if settings.USE_ARTIFICIAL_DELAYS and not experiment_instance.is_responder_type_ai and messages and len(messages) == 1 and messages[0]['is_sender_ai']:
         # Average human types 3-4 chars per second so divide chars by 4 (source: Google Gemini)
         delay_latest_message_seconds = len(messages[0]['text']) / 4
 

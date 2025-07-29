@@ -442,16 +442,10 @@ main section {
 
 #welcome-banner-content-title {
     line-height: 1em;
-    margin: 0 auto 0.5em auto;
+    margin: 13vh auto 0.5em auto;
     background: black;
     padding: 0.2em 0.4em;
     width: fit-content;
-}
-
-#welcome-banner-content-tagline {
-    opacity: 0.8;
-    line-height: 1.3em;
-    max-width: 20em;
 }
 
 #welcome-banner-content-links {
@@ -880,6 +874,82 @@ main section {
     border-radius: 0.4rem;
     margin: 1rem 2rem;
     font-weight: 600;
+}
+
+#experiments-textchat-lobby {
+    position: absolute;
+    top: 17vh;
+    left: 20vw;
+    width: 60vw;
+    height: 50vh;
+    background: rgba(0, 0, 0, 0.8);
+    text-align: center;
+    padding: 1em;
+    display: none;
+}
+
+#experiments-textchat-lobby-title {
+    font-size: 1.3em;
+    font-weight: 500;
+    margin-bottom: 2em;
+}
+
+#experiments-textchat-lobby-loader {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 8rem;
+    margin: 7rem auto;
+}
+
+#experiments-textchat-lobby-loader:before,
+#experiments-textchat-lobby-loader:after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    animation: pulsOut 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 1rem rgba(255, 255, 255, 0.75));
+}
+
+#experiments-textchat-lobby-loader:before {
+    width: 100%;
+    padding-bottom: 100%;
+    box-shadow: inset 0 0 0 1rem var(--color-primary);
+    animation-name: pulsIn;
+}
+
+#experiments-textchat-lobby-loader:after {
+    width: calc(100% - 2rem);
+    padding-bottom: calc(100% - 2rem);
+    box-shadow: 0 0 0 0 var(--color-primary);
+}
+
+@keyframes pulsIn {
+    0% {
+        box-shadow: inset 0 0 0 1rem var(--color-primary);
+        opacity: 1;
+    }
+    50%, 100% {
+        box-shadow: inset 0 0 0 0 var(--color-primary);
+        opacity: 0;
+    }
+}
+
+@keyframes pulsOut {
+    0%, 50% {
+        box-shadow: 0 0 0 0 var(--color-primary-light);
+        opacity: 0;
+    }
+    100% {
+        box-shadow: 0 0 0 1rem var(--color-primary-light);
+        opacity: 1;
+    }
+}
+
+#experiments-textchat-lobby-text {
+    color: #AAA;    
 }
 
 .button-primary {
