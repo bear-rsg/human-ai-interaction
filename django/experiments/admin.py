@@ -14,10 +14,11 @@ def duplicate_experiments(modeladmin, request, queryset):
     for experiment in queryset:
         models.Experiment.objects.create(
             name=f'{experiment.name} (copy)',
-            modality=experiment.modality,
-            responder_type=experiment.responder_type,
             description=experiment.description,
             instructions=experiment.instructions,
+            modality=experiment.modality,
+            originator_speaks_first=experiment.originator_speaks_first,
+            responder_type=experiment.responder_type,
             ai_model=experiment.ai_model,
             initial_prompt_for_ai_responder=experiment.initial_prompt_for_ai_responder,
             survey_url=experiment.survey_url,
