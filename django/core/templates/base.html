@@ -57,46 +57,33 @@
             <!-- Nav list -->
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav ml-auto">
-                    <!-- Welcome -->
-                    <li class="nav-item">
-                        <a class="nav-link{% if request.path == "/" %} active{% endif %}" href="{% url 'general:welcome' %}">
-                            Welcome
-                        </a>
-                    </li>
-                    <!-- About -->
-                    <li class="nav-item">
-                        <a class="nav-link{% if "/about/" in request.path %} active{% endif %}" href="{% url 'general:about' %}">
-                            About
-                        </a>
-                    </li>
                     {% if user.is_authenticated %}
+                        <!-- Welcome -->
+                        <li class="nav-item">
+                            <a class="nav-link{% if request.path == "/" %} active{% endif %}" href="{% url 'general:welcome' %}">
+                                Welcome
+                            </a>
+                        </li>
                         <!-- Experiments -->
                         <li class="nav-item">
                             <a class="nav-link{% if "/experiments/" in request.path %} active{% endif %}" href="{% url 'experiments:index' %}">
                                 Experiments
                             </a>
                         </li>
-                        <!-- Account -->
-                        <li class="nav-item">
-                            <a class="nav-link{% if "/account/" in request.path %} active{% endif %}" href="{% url 'account:account' %}">
-                                Account
-                            </a>
-                        </li>
-                    {% else %}
-                        <!-- Login -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'account:login' %}">
-                                Login
-                            </a>
-                        </li>
-                    {% endif %}
-                    {% if user.is_staff %}
-                        <!-- Admin -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'admin:index' %}">
-                                Admin
-                            </a>
-                        </li>
+                        {% if user.is_staff %}
+                            <!-- Account -->
+                            <li class="nav-item">
+                                <a class="nav-link{% if "/account/" in request.path %} active{% endif %}" href="{% url 'account:account' %}">
+                                    Account
+                                </a>
+                            </li>
+                            <!-- Admin -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'admin:index' %}">
+                                    Admin
+                                </a>
+                            </li>
+                        {% endif %}
                     {% endif %}
                 </ul>
             </div>

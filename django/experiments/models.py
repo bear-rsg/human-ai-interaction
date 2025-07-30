@@ -108,13 +108,6 @@ class Experiment(models.Model):
     related_name = 'experiments'
 
     name = models.CharField(max_length=255)
-    modality = models.ForeignKey(Modality, related_name=related_name, on_delete=models.PROTECT)
-    responder_type = models.ForeignKey(
-        ResponderType,
-        related_name=related_name,
-        on_delete=models.PROTECT,
-        help_text='Whether the responder in this experiment will always be AI, always be human, or system randomly decides'
-    )
     description = models.TextField(
         blank=True, null=True,
         help_text="A brief description of this experiment aimed at participants"
@@ -122,6 +115,17 @@ class Experiment(models.Model):
     instructions = RichTextField(
         blank=True, null=True,
         help_text="Detailed instructions to participants to complete this experiment"
+    )
+    modality = models.ForeignKey(Modality, related_name=related_name, on_delete=models.PROTECT)
+    originator_speaks_first = models.BooleanField(
+        default=True,
+        help_text="If checked, the <em>originator</em> (the participant who first creates the chat) must send the first message. If unchecked, the <em>responder</em> (the AI or the 2nd participant to join the chat) must speak first"
+    )
+    responder_type = models.ForeignKey(
+        ResponderType,
+        related_name=related_name,
+        on_delete=models.PROTECT,
+        help_text='Whether the responder in this experiment will always be AI, always be human, or system randomly decides'
     )
     ai_model = models.ForeignKey(AiModel, related_name=related_name, on_delete=models.PROTECT, verbose_name='AI model')
     initial_prompt_for_ai_responder = models.TextField(
@@ -135,6 +139,16 @@ class Experiment(models.Model):
     datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')
 
     admin_notes = models.TextField(blank=True, null=True, help_text="Optional. Only visible to admins in this dashboard.")
+
+    @property
+    def speaks_first(self):
+        """ Return the name of the role that speaks first in the chat (originator or responder) """
+        return 'originator' if self.originator_speaks_first else 'responder'
+
+    @property
+    def speaks_second(self):
+        """ Return the name of the role that speaks second in the chat (originator or responder) """
+        return 'responder' if self.originator_speaks_first else 'originator'
 
     @property
     def is_responder_type_ai(self):

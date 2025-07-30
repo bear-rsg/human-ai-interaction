@@ -1,7 +1,9 @@
 from django.views.generic import (TemplateView, CreateView)
 from django.urls import reverse_lazy
+from django.shortcuts import render
 from django.contrib.auth import login
 from django.contrib.auth.views import (PasswordChangeView, PasswordResetView, PasswordResetConfirmView)
+from django.contrib.auth.decorators import login_required
 from account import forms
 
 
@@ -90,3 +92,18 @@ class PasswordResetChangeSuccessTemplateView(TemplateView):
     """
 
     template_name = 'registration/reset-password-change-success.html'
+
+
+@login_required
+def withdraw_from_study(request):
+    """
+    Functional view that sets the 'withdrawn' value of the current user to True
+    and renders the withdraw confirmation template.
+    """
+
+    user = request.user
+    user.withdrawn_from_study = True
+    user.is_active = False
+    user.save()
+
+    return render(request, 'account/withdraw.html')

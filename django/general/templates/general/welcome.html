@@ -11,11 +11,7 @@
             Interaction
         </div>
         <div id="welcome-banner-content-links">
-            {% if user.is_authenticated %}
-                <a href="{% url 'experiments:index' %}">View Experiments</a>
-            {% else %}
-                <a href="{% url 'account:create' %}">Join this Study</a>
-            {% endif %}
+            <a href="{% if user.is_authenticated %}{% url 'experiments:index' %}{% else %}{% url 'account:create' %}{% endif %}">Join this Study</a>
         </div>
     </div>
 
@@ -27,10 +23,10 @@
 <section id="welcome" class="container">
     <h2>Welcome</h2>
     <p>
-        Welcome to the Human-AI Interaction website.
+        Welcome to the Human-AI Interaction website! We are researchers in the Department of Linguistics and Communication at the University of Birmingham. This site hosts online experiments that explore how people communicate with artificial intelligence systems. You can participate by clicking on the “Join this Study” button.
     </p>
     <p>
-        ...
+        AI systems are increasingly part of our everyday lives. Whether it’s chatting with a virtual assistant, getting support from a customer service bot, or scrolling through social media, many of our online encounters now involve machines designed to communicate like people. We want to understand how people interact with these systems. If you have any questions or comments, please email us: Dr Matteo Fuoli (<a href="mailto:m.fuoli@bham.ac.uk">m.fuoli@bham.ac.uk</a>) and Dr Marcus Perlman (<a href="mailto:m.perlman@bham.ac.uk">m.perlman@bham.ac.uk</a>).
     </p>
 </section>
 
@@ -51,7 +47,8 @@
             <a href="https://www.birmingham.ac.uk/legal/index.aspx" target="_blank">Legal</a> |
             <a href="https://www.birmingham.ac.uk/university/governance/policies-regs/information/index.aspx" target="_blank">Freedom of Information</a> |
             <a href="{% url 'general:cookies' %}">Cookies</a> |
-            <a href="{% url 'general:accessibility' %}">Accessibility</a>
+            <a href="{% url 'general:accessibility' %}">Accessibility</a> |
+            <a href="{% url 'admin:index' %}">Admin</a>
         </p>	
         <p>
             © University of Birmingham {% now "Y" %}

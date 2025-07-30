@@ -4,12 +4,12 @@
 {% block main %}
 
 <section class="container">
-    <h2>Create Account</h2>
+    <h2>Participant verification</h2>
     <p>
-        Please complete the brief sign up form below to create an account. An account is required to complete experiments in an effort to prevent unwanted access (such as bots).
+        Please complete the brief sign up form below to get started. This is a security measure to prevent unwanted access (such as bots). 
     </p>
     <p>
-        All accounts are anonymous, so please do keep a safe note of your username and password so that you can successfully login.
+        All accounts are anonymous. Your User ID is your Prolific ID or Participant ID provided by project team.
     </p>
 </section>
 
@@ -17,7 +17,7 @@
     <form method="post" class="full-form">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Create your account</button>
+        <button type="submit">Get Started</button>
     </form>
 </section>
 

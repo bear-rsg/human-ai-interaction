@@ -18,10 +18,10 @@ class UserAdmin(UserAdmin):
     """
 
     model = User
-    list_display = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active', 'date_joined', 'last_login']
+    list_display = ['username', 'first_name', 'last_name', 'email', 'role', 'is_active', 'withdrawn_from_study', 'date_joined', 'last_login']
     search_fields = ['username', 'first_name', 'last_name', 'email']
     list_filter = ['role', 'is_active']
-    readonly_fields = ['date_joined', 'last_login']
+    readonly_fields = ['date_joined', 'last_login', 'withdrawn_from_study']
     fieldsets = (
         (
             None,
@@ -33,6 +33,7 @@ class UserAdmin(UserAdmin):
                     'last_name',
                     'role',
                     'password',
+                    'withdrawn_from_study',
                     'is_active',
                     'date_joined',
                     'last_login'

@@ -6,9 +6,6 @@
 
 <section class="container">
     <h2>Login</h2>
-    <p>
-        Accounts are anonymous, so if you've forgotten your username or password you'll need to create a new account. Please contact us for assistance.
-    </p>
     <form method="post" class="full-form">
         {% csrf_token %}
         {{ form.non_field_errors }}
@@ -24,14 +21,6 @@
         </p>
         <button type="submit">Login</button>
     </form>
-</section>
-
-
-<section class="container">
-    <h2>Create Account</h2>
-    <p>
-        If you don't yet have an account, please <a href="{% url 'account:create' %}" id="account-login-createlink">create an account</a>
-    </p>
 </section>
 
 {% endblock %}

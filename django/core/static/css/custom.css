@@ -836,21 +836,22 @@ main section {
     opacity: 1;
 }
 
-#experiments-textchat-chat-endchat {
+#experiments-textchat-chat-withdraw,
+#experiments-survey-withdraw {
     background: var(--color-primary);
     color: black;
     width: fit-content;
     padding: 0.3em 1em;
     border-radius: 1em;
     font-weight: 500;
-    float: right;
     cursor: pointer;
-    margin: 1.5em 0.5em 0 0;
+    margin: 1.5em auto;
     font-size: 0.95em;
     opacity: 0.8;
 }
 
-#experiments-textchat-chat-endchat:hover {
+#experiments-textchat-chat-withdraw:hover,
+#experiments-survey-withdraw:hover {
     opacity: 1;
 }
 
@@ -965,10 +966,16 @@ main section {
     margin: 3em auto;
 }
 
-/* Completed */
+/* Survey */
 
-#experiments-survey {
-    margin-top: 3em;
+#experiments-survey-instructions {
+    margin: 2em auto;
+    font-size: 0.9em;
+    color: #AAA;
+}
+
+#experiments-survey-iframe {
+    margin-top: 1em;
     width: 100%;
     height: 65vh;
 }

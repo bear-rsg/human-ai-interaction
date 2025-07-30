@@ -15,7 +15,7 @@ Apps include:
 + general - this is for static, general sections of the website (e.g. cookies page, accessibility page, etc.) that don't require a data model
 
 + **account** - custom user accounts and auth (overrides the default Django account and auth functionality)
-+ **general** - this is for general sections of the website that don't require a data model (e.g. about page, cookies page, accessibility page, etc.)
++ **general** - this is for general sections of the website that don't require a data model (e.g. welcome page, cookies page, accessibility page, etc.)
 + **experiments** - this app is for running the data gathering experiments as part of this research project
 
 

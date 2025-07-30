@@ -22,4 +22,6 @@ urlpatterns = [
     # Reset password - change
     path('password/reset/change/<uidb64>/<token>/', views.PasswordResetChangeView.as_view(), name='reset-password-change'),
     path('password/reset/change/success/', views.PasswordResetChangeSuccessTemplateView.as_view(), name='reset-password-change-success'),
+    # Withdraw account from study
+    path('withdraw', views.withdraw_from_study, name='withdraw'),
 ]

@@ -3,7 +3,26 @@
 {% block main %}
 
 <div class="container">
-    <iframe id="experiments-survey" src="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}"></iframe>
+    <div id="experiments-survey-instructions">
+        Please complete the survey below. When prompted, input your User ID: {{ user.id }}
+    </div>
+    <iframe id="experiments-survey-iframe" src="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}"></iframe>
 </div>
+
+{% if user == experiment_instance.originator or user == experiment_instance.responder %}
+    <div id="experiments-survey-withdraw">Withdraw from experiment</div>
+{% endif %}
+
+
+<script>
+$(document).ready(function(){
+    // User clicks to withdraw from study (after confirmation)
+    $('#experiments-survey-withdraw').on('click', function(){
+        if (confirm("Are you sure you want to stop the experiment and withdraw from the study?\n\nClick 'OK' to confirm your withdrawal.\nClick 'Cancel' to continue with the study.")){
+            window.location.href = "{% url 'account:withdraw' %}";
+        }
+    });
+});
+</script>
 
 {% endblock %}

@@ -43,9 +43,7 @@
         {% endif %}
 
         {% if user == experiment_instance.originator or user == experiment_instance.responder %}
-            <div id="experiments-textchat-chat-endchat">
-                End chat and proceed to survey <i class="fa-solid fa-circle-arrow-right"></i>
-            </div>
+            <div id="experiments-textchat-chat-withdraw">Withdraw from experiment</div>
         {% endif %}
     </div>
     <div id="experiments-textchat-lobby">
@@ -64,10 +62,12 @@
 $(document).ready(function(){
 
     var userRoleInExperimentInstance = '{{ user_position_in_experiment_instance }}';
+    var userRoleSpeaksSecond = '{{ experiment_instance.experiment.speaks_second }}';
     var isExperimentInstanceActive  = '{{ is_experiment_instance_active }}' == 'True';
     var isUserAdmin = '{{ user.is_admin }}' == 'True';
     var isResponderDetermined = false;
     var isResponderAI = false;
+    var requestedInitialMessageFromAI = false;
     var textInput = $('#experiments-textchat-chat-userinput textarea');
     var chatMessages = $('#experiments-textchat-chat-messages');
     var timeLeft;
@@ -76,7 +76,8 @@ $(document).ready(function(){
     function countdown(){
         if (timeLeft === -1){
             clearTimeout(timerId);
-            location.reload();
+            // Automatically redirect to survey when timer ends
+            window.location.href = "{% url 'experiments:experimentinstance-survey' pk=experiment_instance.id %}";
         } else if (isExperimentInstanceActive){
             let minutes = 0;
             let seconds = 0;
@@ -86,7 +87,7 @@ $(document).ready(function(){
             }
             seconds = seconds < 10 ? '0' + seconds : seconds;
             $('#experiments-textchat-header-timer').html(`Time left: ${minutes}:${seconds}`);
-            if ($('.experiments-textchat-chat-messages-message ')[0]) timeLeft--;
+            if ($('.experiments-textchat-chat-messages-message')[0]) timeLeft--;
         }
     }
 
@@ -96,8 +97,14 @@ $(document).ready(function(){
     }
 
     function userInputLock(lockReason){
-        // Show the lobby
-        if (lockReason == 'determining_responder') $('#experiments-textchat-lobby').show();
+        // When determining the responder at the start of the chat
+        if (lockReason == 'determining_responder'){
+            // Show the lobby
+            $('#experiments-textchat-lobby').show();
+            // Hide the end chat button
+            $('#experiments-textchat-chat-withdraw').hide();
+        }
+
         // Use the lock reason to determine text to display to user
         let textToDisplay = 'Please wait...'
         if (lockReason == 'receiving_message') textToDisplay = 'Waiting for the other participant to send a message ...';
@@ -113,12 +120,21 @@ $(document).ready(function(){
         $('#experiments-textchat-chat-userinput button').show();
         $('#experiments-textchat-chat-messages-waiting').remove();
         $('#experiments-textchat-lobby').hide();
+        $('#experiments-textchat-chat-withdraw').show();
     }
 
     function waitingForResponse(){
         let waitingId = 'experiments-textchat-chat-messages-waiting';
         // Add an animated icon to the chat to indicate that the user is waiting on a response
-        if (isExperimentInstanceActive && getLatestMessage() && getLatestMessage().hasClass('sender') && $(`#${waitingId}`).length == 0){
+        if (
+            isExperimentInstanceActive &&
+            $(`#${waitingId}`).length == 0 &&
+            (
+                (getLatestMessage() && getLatestMessage().hasClass('sender'))
+                ||
+                (isResponderAI && !getLatestMessage() && userRoleInExperimentInstance == userRoleSpeaksSecond)
+            )
+        ){
             chatMessages.append(`<div id="${waitingId}"><span></span><span></span><span></span></div>`);
         }
         scrollBottomMessages();
@@ -153,8 +169,7 @@ $(document).ready(function(){
         // Build full request URL, including any parameters
         let url = 'message/list/';
         // Add latest_message_id parameter
-        let latestMessage = getLatestMessage();
-        if (latestMessage){
+        if (getLatestMessage()){
             var latestMessageId = getLatestMessage().attr('data-id');
             if (typeof latestMessageId !== "undefined") url += `?latest_message_id=${latestMessageId}`;
         }
@@ -166,6 +181,12 @@ $(document).ready(function(){
             // Set global vars about the responder
             isResponderDetermined = data.is_responder_determined;
             isResponderAI = data.is_responder_ai;
+
+            // If responder is AI and AI must speak first, then request the first message from AI
+            if (!requestedInitialMessageFromAI && isResponderAI && !getLatestMessage() && userRoleInExperimentInstance == userRoleSpeaksSecond){
+                waitingForResponse();
+                postMessageAI();
+            }
 
             // Set an artificial delay using the 'delay_latest_message_seconds' (see view for details)
             // Only applies to AI responses if user doesn't know if speaking to AI or human
@@ -181,17 +202,19 @@ $(document).ready(function(){
                 if (!isResponderDetermined) userInputLock('determining_responder');
                 // Lock if user's message is the most recent and waiting to receive message
                 else if (getLatestMessage() && getLatestMessage().hasClass('sender')) userInputLock('receiving_message');
-                // Lock if user is responder and no messages received, as originator must go first
-                else if (userRoleInExperimentInstance == 'responder' && !getLatestMessage()) userInputLock('receiving_message');
+                // Lock if user's role must speak 2nd and no messages received
+                else if (userRoleInExperimentInstance == userRoleSpeaksSecond && !getLatestMessage()) userInputLock('receiving_message');
                 // Unlock
                 else userInputUnlock();
             }, artificialDelay);
+
         }).fail(function(){
             alert("Unable to load messages. Please try refreshing the page or contact us if the problem persists.");
         });
     }
 
     function postMessageAI(){
+        requestedInitialMessageFromAI = true;
         let url = 'message/new/ai/';
         let postData = {'csrfmiddlewaretoken': '{{ csrf_token }}'}
         // Make the AJAX POST request to request the AI creates a new message
@@ -274,10 +297,10 @@ $(document).ready(function(){
         }
     });
 
-    // User clicks to end chat (after confirmation)
-    $('#experiments-textchat-chat-endchat').on('click', function(){
-        if (confirm("Have you finished the chat and wish to complete the survey?\n\nIf yes, please click 'Ok'.\nIf not, please click 'Cancel' to continue the chat.")){
-            window.location.href = "{% url 'experiments:experimentinstance-survey' pk=experiment_instance.id %}";
+    // User clicks to withdraw from study (after confirmation)
+    $('#experiments-textchat-chat-withdraw').on('click', function(){
+        if (confirm("Are you sure you want to stop the experiment and withdraw from the study?\n\nClick 'OK' to confirm your withdrawal.\nClick 'Cancel' to continue with the study.")){
+            window.location.href = "{% url 'account:withdraw' %}";
         }
     });
 

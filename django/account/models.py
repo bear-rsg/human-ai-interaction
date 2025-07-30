@@ -35,7 +35,7 @@ class User(AbstractUser):
     objects = CustomUserManager()  # Custom user manager used to allow for case-insensitive usernames
 
     role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, blank=True, null=True)
-    role = models.ForeignKey(UserRole, on_delete=models.SET_NULL, blank=True, null=True)
+    withdrawn_from_study = models.BooleanField(default=False)
 
     @property
     def name(self):

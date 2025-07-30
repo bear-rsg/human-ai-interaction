@@ -4,6 +4,8 @@ from django import forms
 from .models import User, UserRole
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
+import random
+import string
 
 
 class PublicUserCreationForm(UserCreationForm):
@@ -25,8 +27,19 @@ class PublicUserCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.label_suffix = ""  # removes : from label, e.g. Email: becomes Email
-        self.fields['password1'].help_text = "Your password:<br>- can't be too similar to your other personal information.<br>- must contain at least 8 characters.<br>- can't be a commonly used password.<br>- can't be entirely numeric."
-        self.fields['username'].help_text = "This should be your Prolific username. If you don't have a Prolific account, please provide a custom username that does NOT include any personally identifiable information (e.g. does not include your name, email address, etc). Make a note of this username, as you'll need it to login."
+
+        # Customise helptext for username
+        self.fields['username'].label = "User ID"
+        self.fields['username'].help_text = "Your User ID is your Prolific ID or Participant ID provided by project team"
+
+        # Set the password (and password confirmation) values and hide the fields
+        password = f"Participant{''.join(random.choices(string.digits, k=10))}"
+        # Password
+        self.fields['password1'].widget = forms.HiddenInput()
+        self.fields['password1'].initial = password
+        # Password confirmation
+        self.fields['password2'].widget = forms.HiddenInput()
+        self.fields['password2'].initial = password
 
     class Meta(UserCreationForm.Meta):
         model = User

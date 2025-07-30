@@ -4,7 +4,7 @@
 
 <div id="experiments-index" class="container">
     <div id="experiments-index-instance-create">
-        <h2>Start New Experiment</h2>
+        <h2>Welcome to this Study</h2>
         {% if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser %}
             <!-- Warning that user cannot start a new experiment -->
             <div id="experiments-index-instance-create-warning">
@@ -41,7 +41,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="experiment_id" value="{{ experiment.id }}">
                             <button class="experiments-index-instance-create-list-item-start" type="submit">
-                                <i class="fa-solid fa-play"></i> Start Experiment
+                                <i class="fa-solid fa-play"></i> Consent and Start Experiment
                             </button>
                         </form>
                     {% endif %}
