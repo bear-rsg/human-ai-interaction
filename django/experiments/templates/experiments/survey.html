@@ -4,7 +4,7 @@
 
 <div class="container">
     <div id="experiments-survey-instructions">
-        Please complete the survey below. When prompted, input your User ID: {{ user.id }}
+        Please complete the survey below. When prompted, input your User ID: {{ user.username }}
     </div>
     <iframe id="experiments-survey-iframe" src="{{ experiment_instance.experiment.survey_url }}?username={{ user.username }}"></iframe>
 </div>

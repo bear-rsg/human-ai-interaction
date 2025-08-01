@@ -57,7 +57,7 @@
             <!-- Nav list -->
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav ml-auto">
-                    {% if user.is_authenticated %}
+                    {% if user.is_authenticated and '/account/withdraw' not in request.path %}
                         <!-- Welcome -->
                         <li class="nav-item">
                             <a class="nav-link{% if request.path == "/" %} active{% endif %}" href="{% url 'general:welcome' %}">
