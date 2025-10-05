@@ -17,6 +17,8 @@ class AiModelProvider(models.Model):
 
     name = models.CharField(max_length=200)
     api_key = models.TextField(blank=True, null=True, verbose_name='API key')
+    api_version = models.TextField(blank=True, null=True, verbose_name='API version')
+    api_endpoint = models.TextField(blank=True, null=True, verbose_name='API endpoint')
 
     datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
     datetime_updated = models.DateTimeField(auto_now=True, verbose_name='updated')

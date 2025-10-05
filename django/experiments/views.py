@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotEx
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 from google import genai
 from datetime import datetime
 from . import models
@@ -31,6 +31,12 @@ try:
             ai_client = OpenAI(api_key=api_key)
         elif ai_model_provider == 'GOOGLE':
             ai_client = genai.Client(api_key=api_key)
+        elif ai_model_provider == 'UOB_AZURE_OPENAI':
+            ai_client = AzureOpenAI(
+                api_version=ai_model_provider_obj.api_version,
+                azure_endpoint=ai_model_provider_obj.api_endpoint,
+                api_key=api_key
+            )
         # If ai client has been defined, add it to dict of ai clients
         if ai_client:
             ai_clients[ai_model_provider] = ai_client
@@ -69,7 +75,7 @@ def get_ai_response_google(experiment_instance, ai_model):
         print(e)
 
 
-def get_ai_response_openai(experiment_instance, ai_model):
+def get_ai_response_openai(experiment_instance, ai_model, ai_client_name):
     """
     Provide conversation data to OpenAI-based AI model and return the response text
     """
@@ -90,7 +96,7 @@ def get_ai_response_openai(experiment_instance, ai_model):
         })
 
     try:
-        response = ai_clients['OPENAI'].chat.completions.create(
+        response = ai_clients[ai_client_name].chat.completions.create(
             model=ai_model,  # e.g. "gpt-4o"
             messages=conversation_history
         )
@@ -451,7 +457,9 @@ def experiment_instance_message_new_ai(request, pk):
     if ai_model_provider == 'GOOGLE':
         response_text = get_ai_response_google(experiment_instance, ai_model)
     elif ai_model_provider == 'OPENAI':
-        response_text = get_ai_response_openai(experiment_instance, ai_model)
+        response_text = get_ai_response_openai(experiment_instance, ai_model, ai_model_provider)
+    elif ai_model_provider == 'UOB_AZURE_OPENAI':
+        response_text = get_ai_response_openai(experiment_instance, ai_model, ai_model_provider)
 
     # Create a new ExperimentInstanceMessage object with the response text
     success = False
