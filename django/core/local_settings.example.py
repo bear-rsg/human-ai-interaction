@@ -13,10 +13,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Online tools can help generate this for you, e.g. https://www.miniwebtool.com/django-secret-key-generator/
 SECRET_KEY = ''
 
-# Create Google RECAPTCHA public and private keys: https://www.google.com/recaptcha/
-RECAPTCHA_PUBLIC_KEY = ''
-RECAPTCHA_PRIVATE_KEY = ''
-
 # Set to True if in development, or False is in production
 DEBUG = True/False
 

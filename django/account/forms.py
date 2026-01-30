@@ -2,8 +2,6 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django import forms
 from .models import User, UserRole
-from django_recaptcha.fields import ReCaptchaField
-from django_recaptcha.widgets import ReCaptchaV3
 import random
 import string
 
@@ -20,9 +18,6 @@ class PublicUserCreationForm(UserCreationForm):
         label='Account creation code',
         help_text="The code provided by the project team, which is required to create an account. Please contact us to request a code if you don't have one."
     )
-
-    # Google ReCaptcha v3
-    captcha = ReCaptchaField(widget=ReCaptchaV3, label='')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
