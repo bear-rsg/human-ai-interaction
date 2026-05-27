@@ -102,8 +102,9 @@ def withdraw_from_study(request):
     """
 
     user = request.user
-    user.withdrawn_from_study = True
-    user.is_active = False
-    user.save()
+    if user.role.name.lower() != 'admin':  # ignore for admins
+        user.withdrawn_from_study = True
+        user.is_active = False
+        user.save()
 
     return render(request, 'account/withdraw.html')
