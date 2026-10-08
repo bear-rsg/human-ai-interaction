@@ -111,6 +111,15 @@ $(document).ready(function(){
         $("#experiments-index-instance-history-header form").submit();
     });
 
+    // Disable form button once form has been submitted, to prevent multiple clicks
+    $('form').on('submit', function(){
+        // Find the submit button(s) specifically within the form that was just submitted
+        const $submitBtn = $(this).find(':submit');
+        // Disable the button instantly
+        $submitBtn.prop('disabled', true);
+        $submitBtn.text('Starting experiment, please wait...');
+    });
+
 });
 </script>
 
