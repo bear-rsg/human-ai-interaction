@@ -836,8 +836,10 @@ main section {
     opacity: 1;
 }
 
+#experiments-textchat-chat-completesurvey,
 #experiments-textchat-chat-withdraw,
 #experiments-survey-withdraw {
+    display: block;
     background: var(--color-primary);
     color: black;
     width: fit-content;
@@ -845,11 +847,12 @@ main section {
     border-radius: 1em;
     font-weight: 500;
     cursor: pointer;
-    margin: 1.5em auto;
+    margin: 1em auto;
     font-size: 0.95em;
     opacity: 0.8;
 }
 
+#experiments-textchat-chat-completesurvey:hover,
 #experiments-textchat-chat-withdraw:hover,
 #experiments-survey-withdraw:hover {
     opacity: 1;

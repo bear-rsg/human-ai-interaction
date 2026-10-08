@@ -23,6 +23,7 @@
             <div class="experiments-textchat-chat-alert">
                 This chat is no longer active. You can review past messages but can't send new messages.
             </div>
+            <a id="experiments-textchat-chat-completesurvey" href="{% url 'experiments:experimentinstance-survey' pk=experiment_instance.id %}">Complete the survey</a>
         {% elif user.is_admin and user != experiment_instance.originator and not is_experiment_instance_responder_determined %}
             <div class="experiments-textchat-chat-alert">
                 Please set the responder for this experiment:
@@ -74,8 +75,8 @@ $(document).ready(function(){
     const timerId = setInterval(countdown, 1000);
 
     function countdown(){
-        if (timeLeft === -1){
-            clearTimeout(timerId);
+        if (timeLeft < 0){
+            clearInterval(timerId);
             // Automatically redirect to survey when timer ends
             window.location.href = "{% url 'experiments:experimentinstance-survey' pk=experiment_instance.id %}";
         } else if (isExperimentInstanceActive){
