@@ -263,6 +263,18 @@ class ExperimentInstance(models.Model):
             return self.experimentinstancemessages.first().datetime_created
 
     @property
+    def datetime_created_clean(self):
+        return self.datetime_created.strftime(("%Y-%m-%d %H:%M:%S"))
+
+    @property
+    def date_created_clean(self):
+        return self.datetime_created.strftime(("%Y-%m-%d"))
+
+    @property
+    def time_created_clean(self):
+        return self.datetime_created.strftime(("%H:%M:%S"))
+
+    @property
     def timer(self):
         first_message = self.experimentinstancemessages.first()
         timer_in_seconds = settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE * 60
@@ -325,14 +337,19 @@ class ExperimentInstanceMessage(models.Model):
         return 'originator' if self.is_sender_originator else 'responder'
 
     @property
-    def time_created_clean(self):
-        """ A human readable time of when the message was created """
-        return self.datetime_created.strftime(("%H:%M"))
-
-    @property
     def datetime_created_clean(self):
         """ A human readable datetime of when the message was created """
         return self.datetime_created.strftime(("%Y-%m-%d %H:%M:%S"))
+
+    @property
+    def date_created_clean(self):
+        """ A human readable date of when the message was created """
+        return self.datetime_created.strftime(("%Y-%m-%d"))
+
+    @property
+    def time_created_clean(self):
+        """ A human readable time of when the message was created """
+        return self.datetime_created.strftime(("%H:%M:%S"))
 
     def __str__(self):
         return f'#{self.id}'

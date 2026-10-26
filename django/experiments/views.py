@@ -217,10 +217,12 @@ def experiment_index(request):
             Q(originator__first_name__icontains=search) |
             Q(originator__last_name__icontains=search) |
             Q(originator__email__icontains=search) |
+            Q(originator__username__icontains=search) |
 
             Q(responder__first_name__icontains=search) |
             Q(responder__last_name__icontains=search) |
-            Q(responder__email__icontains=search)
+            Q(responder__email__icontains=search) |
+            Q(responder__username__icontains=search)
         )
     experiment_instances_history = experiment_instances_history.distinct()  # avoids duplicates
 
@@ -240,7 +242,7 @@ def experiment_index(request):
 
     # Add data to context and return it with the template
     context.update({
-        'experiments_all': experiments_all.distinct(),
+        'experiments_all': experiments_all.order_by('-is_published', 'name').distinct(),
         'experiment_instances_warning_toomanyactive_allusers': settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all),
         'experiment_instances_warning_toomanyactive_currentuser': len(experiment_instances_active_currentuser),
         'experiment_instances_history': experiment_instances_history,
@@ -275,15 +277,18 @@ def experiment_instance_create_or_join(request):
     # The experiment_instance will be either the joined or newly created ExperimentInstance object
     create_experiment_instance = True
 
-    # If there are existing active experiments, consider joining one
+    # If user already has an active experiment redirect to index
     experiment_instances_active_all = get_experiment_instances_active_all(get_experiment_instances_all())
+    experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
+    if len(experiment_instances_active_currentuser):
+        return redirect(reverse('experiments:index'))
+
+    # If there are existing active experiments, consider joining one
     if not experiment.is_responder_type_ai and experiment_instances_active_all:
 
         # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
-        experiment_instances_active_currentuser = get_experiment_instances_active_currentuser(experiment_instances_active_all, request.user)
         experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
-        experiment_instances_warning_toomanyactive_currentuser = len(experiment_instances_active_currentuser)
-        if experiment_instances_warning_toomanyactive_allusers or experiment_instances_warning_toomanyactive_currentuser:
+        if experiment_instances_warning_toomanyactive_allusers or len(experiment_instances_active_currentuser):
             return redirect(reverse('experiments:index'))
 
         # If there are any existing ExperimentInstance objects without a Responder
@@ -483,28 +488,71 @@ def experiment_instance_exportdata(request):
     into a CSV file, which is then returned to be downloaded by the user
     """
 
-    # Define the content (column titles and data) to write to file
-    column_titles = [["Experiment Instance", "Message", "Sender", "Sent time", "Text"]]
+    format = request.GET.get('format', 'csv')
+    experiment_id = request.GET.get('experiment_id', None)
     experiment_instance_id = request.GET.get('experiment_instance_id', None)
-    data = models.ExperimentInstanceMessage.objects.all().select_related('experiment_instance', 'sender')
-    # If experiment instance id provided, only include data for this ExperimentInstance object
-    if experiment_instance_id:
-        data = data.filter(experiment_instance_id=experiment_instance_id)
-    if request.user.is_participant:
-        data = data.filter(Q(experiment_instance__originator=request.user) | Q(experiment_instance__responder=request.user))
-    data = [[d.experiment_instance_id, d.id, d.sender_position, d.datetime_created_clean, d.text.strip()] for d in data]
 
-    # Create an in-memory text buffer (StringIO for CSV writer)
-    csv_buffer = io.StringIO()
-    # Create a CSV writer object
-    csv_writer = csv.writer(csv_buffer)
-    # Write data to the CSV buffer
-    csv_writer.writerows(column_titles + data)
-    csv_file_content = csv_buffer.getvalue()
-    csv_buffer.close()
+    # CSV
+    if format == 'csv':
+        # Build data
+        data = models.ExperimentInstanceMessage.objects.all().select_related('experiment_instance', 'sender')
+        if experiment_id:
+            data = data.filter(experiment_instance__experiment_id=experiment_id)
+        if experiment_instance_id:
+            data = data.filter(experiment_instance_id=experiment_instance_id)
+        if request.user.is_participant:
+            data = data.filter(Q(experiment_instance__originator=request.user) | Q(experiment_instance__responder=request.user))
+        data = [[d.experiment_instance_id, d.id, d.sender_position, d.datetime_created_clean, d.text.strip()] for d in data]
 
-    # Create and return the file as response
-    response = HttpResponse(csv_file_content, content_type='text/csv')
+        # Define the content (column titles and data) to write to file
+        column_titles = [["Experiment Instance", "Message", "Sender", "Sent time", "Text"]]
+        # Create an in-memory text buffer (StringIO for CSV writer)
+        csv_buffer = io.StringIO()
+        # Create a CSV writer object
+        csv_writer = csv.writer(csv_buffer)
+        # Write data to the CSV buffer
+        csv_writer.writerows(column_titles + data)
+        csv_file_content = csv_buffer.getvalue()
+        csv_buffer.close()
+        # Create response
+        response = HttpResponse(csv_file_content, content_type='text/csv')
+
+    # TXT
+    elif format == 'txt':
+        experiment_instances = models.ExperimentInstance.objects.all().select_related(
+            'experiment',
+            'originator',
+            'responder'
+        ).prefetch_related(
+            'experimentinstancemessages'
+        )
+        if experiment_instance_id:
+            experiment_instances = experiment_instances.filter(id=experiment_instance_id)
+        elif experiment_id:
+            experiment_instances = experiment_instances.filter(experiment_id=experiment_id)
+
+        # Build data
+        ei_str = ''
+        data = []
+        for ei in experiment_instances:
+            responder = ei.responder.id if ei.responder and not ei.is_responder_ai else 'AI'
+            ei_str = f"""Experiment ID: {ei.experiment_id}
+Experiment Name: {ei.experiment}
+Experiment Instance ID: {ei.id}
+Originator: {ei.originator.id}
+Responder: {responder}
+Date: {ei.date_created_clean}
+Messages:"""
+            for msg in ei.experimentinstancemessages.all():
+                sender = 'originator' if msg.is_sender_originator else 'responder'
+                ei_str += f"\n[{sender} | {msg.time_created_clean}] {msg.text}"
+
+            data.append(ei_str)
+
+        # Create response
+        response = HttpResponse("\n\n----------\n\n".join(data), content_type="text/plain")
+
+    # Return the data file
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    response['Content-Disposition'] = f'attachment; filename="exported_list_data_{timestamp}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="hai_{timestamp}.{format}"'
     return response

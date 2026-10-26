@@ -23,7 +23,12 @@
                     {% if user.is_admin %}<td>{{ experiment_instance.originator }}</td>{% endif %}
                     {% if user.is_admin %}<td>{{ experiment_instance.responder_name }}</td>{% endif %}
                     <td>{{ experiment_instance.is_active_html | safe }}</td>
-                    {% if user.is_admin %}<td><a href="{% url 'experiments:experimentinstance-exportdata' %}?experiment_instance_id={{ experiment_instance.id }}">Export <i class="fa-solid fa-file-arrow-down"></i></a></td>{% endif %}
+                    {% if user.is_admin %}
+                        <td class="exportdatalinks">
+                            <a href="{% url 'experiments:experimentinstance-exportdata' %}?format=csv&experiment_instance_id={{ experiment_instance.id }}">CSV <i class="fa-solid fa-file-arrow-down"></i></a>
+                            <a href="{% url 'experiments:experimentinstance-exportdata' %}?format=txt&experiment_instance_id={{ experiment_instance.id }}">TXT <i class="fa-solid fa-file-arrow-down"></i></a>
+                        </td>
+                    {% endif %}
                     <td><a href="{% url 'experiments:experimentinstance-detail' pk=experiment_instance.id %}">View <i class="fa-solid fa-square-arrow-up-right"></i></a></td>
                 </tr>
             {% endfor %}
