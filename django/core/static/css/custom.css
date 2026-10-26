@@ -514,7 +514,7 @@ main section {
     margin: 1em 1em 3em 1em;
     background: #202020;
     border-radius: 0.8em;
-    padding: 1em 1em 5em 1em;
+    padding: 1.5em;
     display: inline-block;
     position: relative;
     user-select: none;
@@ -525,6 +525,7 @@ main section {
     font-size: 1.5em;
     margin-bottom: 0.5em;
     line-height: 1em;
+    text-align: center;
 }
 
 .experiments-index-instance-create-list-item-description {
@@ -544,21 +545,38 @@ main section {
 }
 
 .experiments-index-instance-create-list-item-start {
-    position: absolute;
-    bottom: 1em;
-    left: 5em;
-    width: calc(100% - 10em);
+    display: block;
+    width: fit-content;
     background: var(--color-primary);
     color: black;
     border: none;
-    padding: 0.8em;
+    margin: 2em auto 0;
+    padding: 0.8em 4em;
     font-weight: 500;
     font-size: 1.1em;
+}
+
+.experiments-index-instance-create-list-item-start:hover {
+    opacity: 0.9;
+}
+
+.experiments-index-instance-create-list-item-exportdata {
+    text-align: center;
+    margin-top: 2em;
+}
+
+.exportdatalinks a {
+    padding-left: 0.5em;
+    font-size: 0.9em;
 }
 
 .experiment-instances-table-nodata {
     color: #AAA;
     font-style: italic;
+}
+
+#experiments-index-instance-history {
+    margin-bottom: 10em;
 }
 
 #experiments-index-instance-history-header {
