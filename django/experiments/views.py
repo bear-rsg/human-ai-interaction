@@ -535,12 +535,15 @@ def experiment_instance_exportdata(request):
         ei_str = ''
         data = []
         for ei in experiment_instances:
-            responder = ei.responder.id if ei.responder and not ei.is_responder_ai else 'AI'
+            responder_id = ei.responder.id if ei.responder and not ei.is_responder_ai else 'AI'
+            responder_username = ei.responder.username if ei.responder and not ei.is_responder_ai else 'AI'
             ei_str = f"""Experiment ID: {ei.experiment_id}
 Experiment Name: {ei.experiment}
 Experiment Instance ID: {ei.id}
-Originator: {ei.originator.id}
-Responder: {responder}
+Originator ID: {ei.originator.id}
+Originator Username: {ei.originator.username}
+Responder ID: {responder_id}
+Responder Username: {responder_username}
 Date: {ei.date_created_clean}
 Messages:"""
             for msg in ei.experimentinstancemessages.all():
