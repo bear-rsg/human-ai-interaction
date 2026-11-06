@@ -4,7 +4,9 @@ from django.shortcuts import render
 from django.contrib.auth import login
 from django.contrib.auth.views import (PasswordChangeView, PasswordResetView, PasswordResetConfirmView)
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from account import forms
+from experiments import models as experiments_models
 
 
 class AccountTemplateView(TemplateView):
@@ -102,7 +104,14 @@ def withdraw_from_study(request):
     """
 
     user = request.user
-    if user.role.name.lower() != 'admin':  # ignore for admins
+
+    # End any active experiments the user is part of
+    experiments_models.ExperimentInstance.objects.filter(
+        Q(responder=user) | Q(originator=user)
+    ).update(is_ended_by_user=True)
+
+    # Update user details (ignore for admins)
+    if user.role.name.lower() != 'admin':
         user.withdrawn_from_study = True
         user.is_active = False
         user.save()

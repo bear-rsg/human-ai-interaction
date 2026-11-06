@@ -30,6 +30,23 @@ def duplicate_experiments(modeladmin, request, queryset):
 duplicate_experiments.short_description = "Duplicate selected experiments"
 
 
+@admin.register(models.CustomSetting)
+class CustomSettingAdminView(admin.ModelAdmin):
+    """
+    Customise the admin interface for AiModelProvider model
+    """
+
+    list_display = ('id', 'name', 'value', 'description')
+    search_fields = ('name', 'value', 'description')
+    list_per_page = LIST_PER_PAGE
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(models.AiModelProvider)
 class AiModelProviderAdminView(admin.ModelAdmin):
     """

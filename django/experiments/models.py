@@ -3,9 +3,64 @@ from account.models import User
 from ckeditor.fields import RichTextField
 from django.utils.timezone import now
 from django.urls import reverse
-from django.conf import settings
 import datetime
 import textwrap
+
+
+class CustomSetting(models.Model):
+    """
+    A key/value pair (and optional description) that controls a site-wide setting,
+    which can be managed by the research team via admin dashboard.
+    This is separate from Django settings (e.g. settings.py, local_settings.py)
+    as these can't be easily managed by the research team
+    """
+
+    name = models.CharField(max_length=255, unique=True)
+    value = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
+    @property
+    def value_as_int(self):
+        try:
+            return int(self.value)
+        except (ValueError, TypeError):
+            return None
+
+    @property
+    def value_as_bool(self):
+        if self.value is None:
+            return None
+
+        # Already a boolean
+        if isinstance(self.value, bool):
+            return self.value
+
+        # Safely handle string evaluation (since bool("False") evaluates to True in Python)
+        if isinstance(self.value, str):
+            val_lower = self.value.strip().lower()
+            if val_lower in ('true', '1', 't', 'y', 'yes'):
+                return True
+            if val_lower in ('false', '0', 'f', 'n', 'no'):
+                return False
+            return None
+
+        try:
+            return bool(float(self.value))
+        except (ValueError, TypeError):
+            return None
+
+    @property
+    def value_as_float(self):
+        try:
+            return float(self.value)
+        except (ValueError, TypeError):
+            return None
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name', 'id')
 
 
 class AiModelProvider(models.Model):
@@ -135,6 +190,13 @@ class Experiment(models.Model):
         help_text="Provide the initial prompt to send to the AI responder to explain how they should behave in this experiment"
     )
     survey_url = models.URLField(help_text="Provide a URL for the associated survey, e.g. Qualtrics. This will be embeded in the website and completed by participants following each experiment instance.")
+
+    instances_inactive_after_minutes_since_first_message = models.IntegerField(default=5, verbose_name="After how many minutes since the first message sent should an experiment instance be made inactive?")
+    instances_inactive_after_minutes_since_created = models.IntegerField(default=30, verbose_name="After how many minutes since it's created should an experiment instance be made inactive?")
+    wait_for_responder_to_be_determined_minutes = models.IntegerField(default=1, verbose_name="How many minutes to allow an admin to manually determine the responder of an experiment (human or AI)?")
+    probability_responder_is_ai = models.FloatField(default=0.5, verbose_name="What's the probability that the responder is an AI?", help_text="Impossible = 0, 50/50 = 0.5, Guaranteed = 1")
+    delay_responses_from_ai_seconds = models.IntegerField(default=0, verbose_name="How many seconds to artificially delay responses from AI to simulate humans typing?", help_text="Set to 0 for no delay")
+
     is_published = models.BooleanField(default=True)
 
     datetime_created = models.DateTimeField(auto_now_add=True, verbose_name='created')
@@ -212,7 +274,7 @@ class ExperimentInstance(models.Model):
 
     @property
     def is_wait_for_responder_to_be_determined_expired(self):
-        return not self.is_responder_determined and self.datetime_created <= now() - datetime.timedelta(minutes=settings.WAIT_FOR_RESPONDER_TO_BE_DETERMINED_MINUTES)
+        return not self.is_responder_determined and self.datetime_created <= now() - datetime.timedelta(minutes=self.experiment.wait_for_responder_to_be_determined_minutes)
 
     @property
     def responder_name(self):
@@ -226,8 +288,8 @@ class ExperimentInstance(models.Model):
     @property
     def wait_to_request_response_seconds(self):
         """ How long to delay on the client when waiting for response, to simulate waiting for a reply """
-        if settings.USE_ARTIFICIAL_DELAYS and not self.is_responder_type_ai:
-            return settings.WAIT_TO_REQUEST_RESPONSE_SECONDS * 1000
+        if self.experiment.delay_responses_from_ai_seconds and not self.is_responder_type_ai:
+            return self.experiment.delay_responses_from_ai_seconds * 1000
         else:
             return 0
 
@@ -239,10 +301,10 @@ class ExperimentInstance(models.Model):
         # Inactive if the first message was created more than the allowed time
         first_message = self.experimentinstancemessages.first()
         if first_message:
-            if first_message.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE):
+            if first_message.datetime_created <= now() - datetime.timedelta(minutes=self.experiment.instances_inactive_after_minutes_since_first_message):
                 return False
-        # Inactive if there are no messages and the instance was created over 30 minutes ago
-        elif self.datetime_created <= now() - datetime.timedelta(minutes=settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_SINCE_CREATED):
+        # Inactive if there are no messages and the instance was created over X minutes ago
+        elif self.datetime_created <= now() - datetime.timedelta(minutes=self.experiment.instances_inactive_after_minutes_since_created):
             return False
         return True
 
@@ -277,12 +339,9 @@ class ExperimentInstance(models.Model):
     @property
     def timer(self):
         first_message = self.experimentinstancemessages.first()
-        timer_in_seconds = settings.EXPERIMENT_INSTANCE_INACTIVE_AFTER_MINUTES_SINCE_FIRST_MESSAGE * 60
+        timer_in_seconds = self.experiment.instances_inactive_after_minutes_since_first_message * 60
         if first_message:
-            return max(
-                0,
-                timer_in_seconds - int((now() - self.datetime_started).total_seconds())
-            )
+            return max(0, timer_in_seconds - int((now() - self.datetime_started).total_seconds()))
         else:
             return timer_in_seconds
 

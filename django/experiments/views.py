@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied, BadRequest, ObjectDoesNotExist
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
-from django.conf import settings
 from openai import OpenAI, AzureOpenAI
 from google import genai
 from datetime import datetime
@@ -172,6 +171,23 @@ def create_message_dict_for_client(message, user=None):
     }
 
 
+def get_custom_setting(name, type='str'):
+    """
+    Returns the value of a custom setting (by providing its name)
+    Type can be one of: str (default), int, bool
+    """
+    settings_found = models.CustomSetting.objects.filter(name=name)
+    if settings_found:
+        setting = settings_found.first()
+        if setting:
+            if type == 'int':
+                return setting.value_as_int
+            elif type == 'bool':
+                return setting.value_as_bool
+            else:
+                return setting.value
+
+
 # Views
 
 
@@ -243,7 +259,7 @@ def experiment_index(request):
     # Add data to context and return it with the template
     context.update({
         'experiments_all': experiments_all.order_by('-is_published', 'name').distinct(),
-        'experiment_instances_warning_toomanyactive_allusers': settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all),
+        'experiment_instances_warning_toomanyactive_allusers': get_custom_setting('experiment_instances_active_max', 'int') < len(experiment_instances_active_all),
         'experiment_instances_warning_toomanyactive_currentuser': len(experiment_instances_active_currentuser),
         'experiment_instances_history': experiment_instances_history,
         'experiment_instances_history_count': len(experiment_instances_history),
@@ -287,7 +303,7 @@ def experiment_instance_create_or_join(request):
     if not experiment.is_responder_type_ai and experiment_instances_active_all:
 
         # Checks for warnings (e.g. too many active ExperimentInstance objects) and redirect to index if any warning found
-        experiment_instances_warning_toomanyactive_allusers = settings.EXPERIMENT_INSTANCES_ACTIVE_MAX < len(experiment_instances_active_all)
+        experiment_instances_warning_toomanyactive_allusers = get_custom_setting('experiment_instances_active_max', 'int') < len(experiment_instances_active_all)
         if experiment_instances_warning_toomanyactive_allusers or len(experiment_instances_active_currentuser):
             return redirect(reverse('experiments:index'))
 
@@ -310,7 +326,7 @@ def experiment_instance_create_or_join(request):
             originator=request.user,
         )
         # Set responder to be AI if the experiment responder type is AI (or random and system decides)
-        if experiment.is_responder_type_ai or (experiment.is_responder_type_random and random.random() <= settings.PROBABILITY_RESPONDER_IS_AI):
+        if experiment.is_responder_type_ai or (experiment.is_responder_type_random and random.random() <= experiment.probability_responder_is_ai):
             experiment_instance.is_responder_ai = True
             experiment_instance.save()
 
@@ -399,7 +415,7 @@ def experiment_instance_message_list(request, pk):
     # Send a delay for the latest message to client to simulate human typing,
     # if AI is sender (but user doesn't know if sender is AI or human)
     delay_latest_message_seconds = 0
-    if settings.USE_ARTIFICIAL_DELAYS and not experiment_instance.is_responder_type_ai and messages and len(messages) == 1 and messages[0]['is_sender_ai']:
+    if experiment_instance.experiment.delay_responses_from_ai_seconds > 0 and not experiment_instance.is_responder_type_ai and messages and len(messages) == 1 and messages[0]['is_sender_ai']:
         # Average human types 3-4 chars per second so divide chars by 4 (source: Google Gemini)
         delay_latest_message_seconds = len(messages[0]['text']) / 4
 
